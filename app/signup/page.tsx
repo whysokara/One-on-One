@@ -14,30 +14,50 @@ export default async function SignupPage() {
 
   return (
     <AppFrame user={user}>
-      <div className="mx-auto grid w-full max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[minmax(0,1.04fr)_24rem]">
         <div className="space-y-5">
           <PageHeader
-            eyebrow="Get Started"
-            title="Create your One-on-One account."
-            description="Choose your role once and the app routes you into the correct workspace immediately."
+            eyebrow="Create Account"
+            title="Create one account. The role decides the workspace."
+            description="Managers create and run the board. Reportees create their account first, then join the correct board with a code or link."
+            aside={
+              <>
+                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Manager role</div>
+                  Create the board, invite the team, read shared timelines, publish announcements, and write private notes.
+                </div>
+                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Reportee role</div>
+                  Maintain your own timeline of achievements, blockers, learning, and progress for your manager to review later.
+                </div>
+              </>
+            }
           />
-          <FormShell title="Create your account" description="Managers create boards. Reportees join with an invite code or link from their manager.">
-            <SignupForm />
-            <p className="mt-4 text-sm text-ink/60">
-              Already have an account?{" "}
-              <Link href="/login" className="font-medium text-pine">
-                Log in
-              </Link>
-            </p>
-          </FormShell>
+
+          <SectionCard title="Before you create the account" description="A few choices matter up front.">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+                Use your work email so the account remains easy to identify and recover.
+              </div>
+              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+                Choose Manager only if you own the board and invite others into it.
+              </div>
+              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+                Reportees can create the account now and join the board as soon as the invite arrives.
+              </div>
+            </div>
+          </SectionCard>
         </div>
-        <SectionCard title="Before you sign up">
-          <ul className="space-y-2 text-sm leading-6 text-ink/72">
-            <li>Choose Manager if you own the board and invite others.</li>
-            <li>Choose Reportee if you’re contributing your own timeline.</li>
-            <li>You can join a board after signup from the employee workspace.</li>
-          </ul>
-        </SectionCard>
+
+        <FormShell title="Create account" description="You can sign up now and immediately log back in with the same credentials.">
+          <SignupForm />
+          <p className="mt-4 text-sm text-[color:var(--muted)]">
+            Already have an account?{" "}
+            <Link href="/login" className="font-medium text-[color:var(--hero)]">
+              Log in
+            </Link>
+          </p>
+        </FormShell>
       </div>
     </AppFrame>
   );

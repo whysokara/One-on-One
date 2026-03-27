@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AddAnnouncementForm } from "@/components/entry-forms";
+import { AddAnnouncementForm, RemoveBoardMemberForm } from "@/components/entry-forms";
 import { AppFrame, EmptyState, MemberCard, PageHeader, SectionCard, SummaryTile } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
 import { requireAwsConfig } from "@/lib/config";
@@ -29,18 +29,16 @@ export default async function ManagerBoardPage({
         <PageHeader
           eyebrow="Manager Board"
           title={dashboard.board.name}
-          description={
-            dashboard.board.description || "A review-ready record of achievements, blockers, learning, and private coaching context."
-          }
+          description={dashboard.board.description || "The working surface for shared employee evidence, private manager context, announcements, and board access."}
           aside={
             <>
-              <div className="rounded-[22px] bg-sand px-4 py-4 text-sm text-ink/75">
-                <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">Invite Code</div>
-                <div className="mt-1.5 text-lg font-semibold tracking-[0.04em] text-ink">{dashboard.board.inviteCode}</div>
+              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm text-[color:var(--muted)]">
+                <div className="text-[11px] uppercase tracking-[0.16em]">Invite code</div>
+                <div className="mt-1.5 text-lg font-semibold tracking-[0.04em] text-[color:var(--ink)]">{dashboard.board.inviteCode}</div>
               </div>
-              <div className="rounded-[22px] bg-fog px-4 py-4 text-sm text-ink/75">
-                <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">Invite Link</div>
-                <Link className="mt-1.5 block break-all font-medium text-pine" href={inviteLink}>
+              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] px-4 py-4 text-sm text-[color:var(--muted)]">
+                <div className="text-[11px] uppercase tracking-[0.16em]">Invite link</div>
+                <Link className="mt-1.5 block break-all font-medium text-[color:var(--hero)]" href={inviteLink}>
                   {inviteLink}
                 </Link>
               </div>
@@ -55,9 +53,9 @@ export default async function ManagerBoardPage({
           <SummaryTile label="Manager notes" value={dashboard.summary.managerNotesCount} />
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.32fr)_22rem]">
-          <SectionCard title="Reportees" description="Each card rolls up shared entry count and recent activity so you can scan the team quickly.">
-            <div className="space-y-4">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.34fr)_21rem]">
+          <SectionCard title="People on this board" description="Scan the team quickly, then drill into the full employee timeline when you need the detail.">
+            <div className="space-y-3">
               {dashboard.members.length ? (
                 dashboard.members.map((member) => (
                   <MemberCard
@@ -67,6 +65,7 @@ export default async function ManagerBoardPage({
                     entryCount={member.entryCount}
                     lastUpdated={member.lastUpdated}
                     href={`/manager/board/${dashboard.board.id}/employee/${member.id}`}
+                    actions={<RemoveBoardMemberForm boardId={dashboard.board.id} employeeId={member.id} />}
                   />
                 ))
               ) : (
@@ -75,16 +74,16 @@ export default async function ManagerBoardPage({
             </div>
           </SectionCard>
 
-          <SectionCard title="Announcements" description="Use this for short team reminders, prompts, or rollout notes.">
-            <div className="space-y-3.5">
+          <SectionCard title="Announcements" description="Keep these short. This rail is for prompts, reminders, and team-wide context.">
+            <div className="space-y-3">
               <AddAnnouncementForm boardId={dashboard.board.id} />
               {dashboard.announcements.length ? (
                 <div className="space-y-3">
                   {dashboard.announcements.map((announcement) => (
-                    <article key={announcement.id} className="rounded-[20px] bg-fog/85 p-4">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">{formatDate(announcement.createdAt)}</div>
-                      <h3 className="mt-2 text-base font-semibold text-ink">{announcement.title}</h3>
-                      <p className="mt-2 text-sm leading-6 text-ink/70">{announcement.message}</p>
+                    <article key={announcement.id} className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">{formatDate(announcement.createdAt)}</div>
+                      <h3 className="mt-2 text-base font-semibold text-[color:var(--ink)]">{announcement.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{announcement.message}</p>
                     </article>
                   ))}
                 </div>

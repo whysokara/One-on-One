@@ -330,6 +330,35 @@ export async function getMembership(boardId: string, userId: string) {
   } satisfies BoardMember;
 }
 
+export async function removeBoardMember(boardId: string, userId: string) {
+  const client = getDocumentClient();
+  const config = requireAwsConfig();
+  const membership = await getMembership(boardId, userId);
+
+  if (!membership) {
+    throw new Error("This person is no longer part of the board.");
+  }
+
+  const entries = await getEntriesForBoard(boardId);
+  const employeeEntries = entries.filter((entry) => entry.employeeId === userId);
+
+  await Promise.all(employeeEntries.map((entry) => deleteEntry(entry.id)));
+
+  await client.send(
+    new DeleteCommand({
+      TableName: config.membershipsTable,
+      Key: {
+        boardId,
+        id: `${boardId}#${userId}`,
+      },
+    }),
+  );
+
+  return {
+    removedEntries: employeeEntries.length,
+  };
+}
+
 export async function createEntry(input: {
   boardId: string;
   employeeId: string;

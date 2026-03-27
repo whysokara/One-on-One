@@ -6,3 +6,4 @@ npm-debug.log*
 .env*.local
 delete.txt
 cdk.out
+.DS_Store

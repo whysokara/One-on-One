@@ -6,6 +6,7 @@ import {
   createPrivateNoteAction,
   createSharedEntryAction,
   deleteSharedEntryAction,
+  removeBoardMemberAction,
   updateSharedEntryAction,
 } from "@/lib/actions";
 import { ActionForm, Field, SelectField, TextArea } from "@/components/forms";
@@ -28,23 +29,26 @@ export function AddSharedEntryForm({
   return (
     <ActionForm action={createSharedEntryAction} submitLabel="Save entry" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field
-          label="Title"
-          name="title"
-          required
-          placeholder="Closed a major stakeholder loop"
-          minLength={VALIDATION_LIMITS.titleMin}
-          maxLength={VALIDATION_LIMITS.titleMax}
-        />
-        <Field label="Date" name="entryDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
+      <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
+        Write one concrete moment per entry. Good examples: resolved a blocker, shipped a meaningful outcome, learned something important, or received notable appreciation.
       </div>
-      <SelectField label="Category" name="category" options={categoryOptions(categories)} />
+      <Field
+        label="What happened"
+        name="title"
+        required
+        placeholder="Resolved vendor escalation before launch freeze"
+        minLength={VALIDATION_LIMITS.titleMin}
+        maxLength={VALIDATION_LIMITS.titleMax}
+      />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Date" name="entryDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
+        <SelectField label="Category" name="category" options={categoryOptions(categories)} />
+      </div>
       <TextArea
-        label="Description"
+        label="Why it matters"
         name="description"
         required
-        placeholder="Keep it short and specific so appraisal time is easy later."
+        placeholder="Add the important context, result, impact, or learning in plain language."
         minLength={VALIDATION_LIMITS.descriptionMin}
         maxLength={VALIDATION_LIMITS.descriptionMax}
       />
@@ -70,20 +74,20 @@ export function EditSharedEntryForm({
       refreshOnSuccess
     >
       <input type="hidden" name="entryId" value={entry.id} />
+      <Field
+        label="What happened"
+        name="title"
+        required
+        defaultValue={entry.title}
+        minLength={VALIDATION_LIMITS.titleMin}
+        maxLength={VALIDATION_LIMITS.titleMax}
+      />
       <div className="grid gap-4 md:grid-cols-2">
-        <Field
-          label="Title"
-          name="title"
-          required
-          defaultValue={entry.title}
-          minLength={VALIDATION_LIMITS.titleMin}
-          maxLength={VALIDATION_LIMITS.titleMax}
-        />
         <Field label="Date" name="entryDate" type="date" required defaultValue={entry.entryDate} />
+        <SelectField label="Category" name="category" options={categoryOptions(categories)} defaultValue={entry.category} />
       </div>
-      <SelectField label="Category" name="category" options={categoryOptions(categories)} defaultValue={entry.category} />
       <TextArea
-        label="Description"
+        label="Why it matters"
         name="description"
         required
         defaultValue={entry.description}
@@ -125,20 +129,23 @@ export function AddPrivateNoteForm({
     <ActionForm action={createPrivateNoteAction} submitLabel="Save note" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
       <input type="hidden" name="employeeId" value={employeeId} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field
-          label="Title"
-          name="title"
-          required
-          placeholder="Handled client escalation calmly"
-          maxLength={VALIDATION_LIMITS.titleMax}
-          minLength={VALIDATION_LIMITS.titleMin}
-        />
-        <Field label="Date" name="entryDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
+      <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
+        Use this for coaching context, pattern recognition, or manager observations that should stay private.
       </div>
-      <SelectField label="Category" name="category" options={categoryOptions(categories)} />
+      <Field
+        label="Private note title"
+        name="title"
+        required
+        placeholder="Handled client escalation calmly"
+        maxLength={VALIDATION_LIMITS.titleMax}
+        minLength={VALIDATION_LIMITS.titleMin}
+      />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Date" name="entryDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
+        <SelectField label="Category" name="category" options={categoryOptions(categories)} />
+      </div>
       <TextArea
-        label="Description"
+        label="Context"
         name="description"
         required
         maxLength={VALIDATION_LIMITS.descriptionMax}
@@ -152,6 +159,9 @@ export function AddAnnouncementForm({ boardId }: { boardId: string }) {
   return (
     <ActionForm action={createAnnouncementAction} submitLabel="Publish" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
+      <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
+        Best for short prompts, reminders, deadlines, or rollout notes that every reportee on the board should see.
+      </div>
       <Field
         label="Title"
         name="title"
@@ -169,6 +179,34 @@ export function AddAnnouncementForm({ boardId }: { boardId: string }) {
         minLength={VALIDATION_LIMITS.announcementMessageMin}
         maxLength={VALIDATION_LIMITS.announcementMessageMax}
       />
+    </ActionForm>
+  );
+}
+
+export function RemoveBoardMemberForm({
+  boardId,
+  employeeId,
+  redirectToBoard = false,
+}: {
+  boardId: string;
+  employeeId: string;
+  redirectToBoard?: boolean;
+}) {
+  return (
+    <ActionForm
+      action={removeBoardMemberAction}
+      submitLabel="Remove from board"
+      submitVariant="destructive"
+      refreshOnSuccess={!redirectToBoard}
+      onSubmit={(event) => {
+        if (!window.confirm("Remove this person from the board and clear their board-specific history?")) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="boardId" value={boardId} />
+      <input type="hidden" name="employeeId" value={employeeId} />
+      <input type="hidden" name="redirectToBoard" value={redirectToBoard ? "1" : "0"} />
     </ActionForm>
   );
 }
@@ -197,7 +235,7 @@ export function SharedEntryCard({
   const [isEditing, setIsEditing] = useState(false);
 
   return (
-    <div className="rounded-[22px] border border-black/5 bg-fog/80 p-3 md:p-4">
+    <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] p-3 md:p-4">
       <TimelineCard date={entry.entryDate} category={entry.category} title={entry.title} description={entry.description} />
 
       <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
@@ -205,8 +243,10 @@ export function SharedEntryCard({
           type="button"
           onClick={() => setIsEditing((value) => !value)}
           className={cn(
-            "inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
-            isEditing ? "border-black/10 bg-black/5 text-ink hover:bg-black/8" : "border-black/10 bg-white text-ink hover:bg-white/80",
+            "inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-medium transition",
+            isEditing
+              ? "border-[color:var(--line)] bg-[color:var(--mist)] text-[color:var(--ink)] hover:bg-[rgba(15,23,42,0.05)]"
+              : "border-[color:var(--line)] bg-white text-[color:var(--ink)] hover:bg-[color:var(--mist)]",
           )}
         >
           <PencilIcon />
@@ -215,11 +255,11 @@ export function SharedEntryCard({
       </div>
 
       {isEditing ? (
-        <div className="mt-3 rounded-[20px] border border-black/6 bg-white/88 p-4">
+        <div className="mt-3 rounded-xl border border-[color:var(--line)] bg-white p-4">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/45">Edit entry</div>
-              <div className="mt-1 text-sm text-ink/68">Update the saved details below. Changes apply to the same timeline item.</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Edit entry</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Update the saved details below. Changes apply to the same timeline item.</div>
             </div>
             <div className="lg:w-[10rem]">
               <DeleteSharedEntryForm entryId={entry.id} />

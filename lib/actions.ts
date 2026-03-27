@@ -16,6 +16,7 @@ import {
   getEntryById,
   getManagerBoard,
   joinBoard,
+  removeBoardMember,
   updateEntry,
 } from "@/lib/db";
 import { ensureManagerOwnsBoard, ensureReporteeBelongsToBoard } from "@/lib/queries";
@@ -318,5 +319,35 @@ export async function createAnnouncementAction(_: FormState | undefined, formDat
   } catch (error) {
     rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to publish announcement.");
+  }
+}
+
+export async function removeBoardMemberAction(_: FormState | undefined, formData: FormData) {
+  try {
+    const manager = await requireRole("manager");
+    const boardId = readRequired(formData, "boardId", "Board");
+    const employeeId = readRequired(formData, "employeeId", "Employee");
+    const redirectToBoard = readString(formData, "redirectToBoard") === "1";
+    const board = await ensureManagerOwnsBoard(manager.id, boardId);
+    const membership = await ensureReporteeBelongsToBoard(employeeId, boardId);
+
+    if (!board || !membership) {
+      return fail("This person is no longer attached to your board.");
+    }
+
+    await removeBoardMember(boardId, employeeId);
+
+    revalidatePath(`/manager/board/${boardId}`);
+    revalidatePath(`/manager/board/${boardId}/employee/${employeeId}`);
+    revalidatePath("/employee");
+
+    if (redirectToBoard) {
+      redirect(`/manager/board/${boardId}`);
+    }
+
+    return succeed("Board member removed.");
+  } catch (error) {
+    rethrowRedirectError(error);
+    return fail(error instanceof Error ? error.message : "Unable to remove this board member.");
   }
 }
