@@ -223,13 +223,17 @@ export async function getBoardForReportee(userId: string) {
 export async function joinBoard(boardId: string, userId: string) {
   const client = getDocumentClient();
   const config = requireAwsConfig();
-  const board = await getBoardById(boardId);
+  const [board, existingBoard] = await Promise.all([getBoardById(boardId), getBoardForReportee(userId)]);
   if (!board) {
     throw new Error("Board not found.");
   }
 
   if (board.managerId === userId) {
     throw new Error("Managers cannot join their own board as a reportee.");
+  }
+
+  if (existingBoard && existingBoard.id !== boardId) {
+    throw new Error(`You are already attached to "${existingBoard.name}". One-on-One currently supports one board per reportee.`);
   }
 
   const membership: MembershipItem = {

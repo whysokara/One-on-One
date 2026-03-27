@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { AddAnnouncementForm } from "@/components/entry-forms";
-import { EmptyState, AppFrame, MemberCard, SectionCard, SummaryTile } from "@/components/ui";
+import { AppFrame, EmptyState, MemberCard, PageHeader, SectionCard, SummaryTile } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
+import { requireAwsConfig } from "@/lib/config";
 import { getManagerDashboard } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 
@@ -15,41 +17,36 @@ export default async function ManagerBoardPage({
   const dashboard = await getManagerDashboard(user.id);
 
   if (!dashboard || dashboard.board.id !== boardId) {
-    return (
-      <AppFrame user={user}>
-        <EmptyState title="Board not found" body="This board does not exist or does not belong to your account." />
-      </AppFrame>
-    );
+    notFound();
   }
 
-  const inviteLink = `/join?boardId=${dashboard.board.id}`;
+  const config = requireAwsConfig();
+  const inviteLink = `${config.appBaseUrl.replace(/\/$/, "")}/join?boardId=${dashboard.board.id}`;
 
   return (
     <AppFrame user={user}>
-      <div className="space-y-5">
-        <section className="rounded-[28px] border border-white/70 bg-white/88 p-5 shadow-card md:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-ink/45">Manager Board</p>
-              <h1 className="mt-2 text-[2.2rem] font-semibold tracking-[-0.05em] text-ink">{dashboard.board.name}</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/70">
-                {dashboard.board.description || "A review-ready record of achievements, blockers, learning, and private coaching context."}
-              </p>
-            </div>
-            <div className="grid gap-3 text-sm text-ink/75">
-              <div className="rounded-2xl bg-sand px-4 py-3">
+      <div className="flex w-full flex-col gap-5">
+        <PageHeader
+          eyebrow="Manager Board"
+          title={dashboard.board.name}
+          description={
+            dashboard.board.description || "A review-ready record of achievements, blockers, learning, and private coaching context."
+          }
+          aside={
+            <>
+              <div className="rounded-[22px] bg-sand px-4 py-4 text-sm text-ink/75">
                 <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">Invite Code</div>
-                <div className="mt-1 text-lg font-semibold text-ink">{dashboard.board.inviteCode}</div>
+                <div className="mt-1.5 text-lg font-semibold tracking-[0.04em] text-ink">{dashboard.board.inviteCode}</div>
               </div>
-              <div className="rounded-2xl bg-fog px-4 py-3">
+              <div className="rounded-[22px] bg-fog px-4 py-4 text-sm text-ink/75">
                 <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">Invite Link</div>
-                <Link className="mt-1 block font-medium text-pine" href={inviteLink}>
+                <Link className="mt-1.5 block break-all font-medium text-pine" href={inviteLink}>
                   {inviteLink}
                 </Link>
               </div>
-            </div>
-          </div>
-        </section>
+            </>
+          }
+        />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryTile label="Total reportees" value={dashboard.summary.totalReportees} />
@@ -58,8 +55,8 @@ export default async function ManagerBoardPage({
           <SummaryTile label="Manager notes" value={dashboard.summary.managerNotesCount} />
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[1.28fr_0.92fr]">
-          <SectionCard title="Reportees">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.32fr)_22rem]">
+          <SectionCard title="Reportees" description="Each card rolls up shared entry count and recent activity so you can scan the team quickly.">
             <div className="space-y-4">
               {dashboard.members.length ? (
                 dashboard.members.map((member) => (
@@ -78,16 +75,16 @@ export default async function ManagerBoardPage({
             </div>
           </SectionCard>
 
-          <SectionCard title="Announcements">
+          <SectionCard title="Announcements" description="Use this for short team reminders, prompts, or rollout notes.">
             <div className="space-y-3.5">
               <AddAnnouncementForm boardId={dashboard.board.id} />
               {dashboard.announcements.length ? (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {dashboard.announcements.map((announcement) => (
-                    <article key={announcement.id} className="rounded-[18px] bg-fog p-3.5">
+                    <article key={announcement.id} className="rounded-[20px] bg-fog/85 p-4">
                       <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">{formatDate(announcement.createdAt)}</div>
-                      <h3 className="mt-1.5 text-base font-semibold text-ink">{announcement.title}</h3>
-                      <p className="mt-1.5 text-sm leading-6 text-ink/70">{announcement.message}</p>
+                      <h3 className="mt-2 text-base font-semibold text-ink">{announcement.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-ink/70">{announcement.message}</p>
                     </article>
                   ))}
                 </div>

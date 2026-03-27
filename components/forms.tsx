@@ -1,10 +1,17 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { FormState } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 
 const EMPTY_STATE: FormState = {};
+const CONTROL_CLASS =
+  "w-full min-w-0 rounded-[18px] border border-black/10 bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink/40 focus:border-pine/35 focus:ring-4 focus:ring-pine/8";
+const LABEL_CLASS = "mb-2 block text-[13px] font-semibold tracking-[-0.01em] text-ink";
+const PRIMARY_BUTTON_CLASS =
+  "inline-flex min-h-11 items-center justify-center rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-pine/92 disabled:cursor-not-allowed disabled:opacity-60";
+const DESTRUCTIVE_BUTTON_CLASS =
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-ember/25 bg-ember/8 px-5 py-2.5 text-sm font-semibold text-ember transition hover:bg-ember/12 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function FormShell({
   title,
@@ -18,10 +25,10 @@ export function FormShell({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-[26px] border border-white/60 bg-white/88 p-6 shadow-card backdrop-blur md:p-7", className)}>
-      <h1 className="text-[1.9rem] font-semibold tracking-[-0.03em] text-ink">{title}</h1>
-      {description ? <p className="mt-1.5 max-w-2xl text-sm leading-6 text-ink/72">{description}</p> : null}
-      <div className="mt-5">{children}</div>
+    <section className={cn("rounded-[28px] border border-white/70 bg-white/90 p-5 shadow-card backdrop-blur md:p-7", className)}>
+      <h1 className="text-[1.8rem] font-semibold tracking-[-0.04em] text-ink md:text-[2rem]">{title}</h1>
+      {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/70">{description}</p> : null}
+      <div className="mt-6">{children}</div>
     </section>
   );
 }
@@ -31,26 +38,55 @@ export function ActionForm({
   children,
   submitLabel,
   className,
+  submitVariant = "primary",
+  resetOnSuccess = false,
+  onSuccess,
+  onSubmit,
 }: {
   action: (state: FormState | undefined, formData: FormData) => Promise<FormState | undefined>;
   children: React.ReactNode;
   submitLabel: string;
   className?: string;
+  submitVariant?: "primary" | "destructive";
+  resetOnSuccess?: boolean;
+  onSuccess?: () => void;
+  onSubmit?: React.FormEventHandler<HTMLFormElement>;
 }) {
   const [state, formAction, pending] = useActionState<FormState | undefined, FormData>(action, EMPTY_STATE);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!state?.success) {
+      return;
+    }
+
+    if (resetOnSuccess) {
+      formRef.current?.reset();
+    }
+
+    onSuccess?.();
+  }, [onSuccess, resetOnSuccess, state?.submissionId, state?.success]);
 
   return (
-    <form action={formAction} className={cn("space-y-3.5", className)}>
+    <form ref={formRef} action={formAction} onSubmit={onSubmit} className={cn("space-y-4", className)}>
       {children}
       {state?.error ? (
-        <div className="rounded-2xl border border-ember/20 bg-ember/10 px-4 py-2.5 text-sm text-ember">
+        <div className="rounded-[18px] border border-ember/18 bg-ember/10 px-4 py-3 text-sm leading-6 text-ember">
           {state.error}
+        </div>
+      ) : null}
+      {state?.success ? (
+        <div className="rounded-[18px] border border-moss/20 bg-moss/10 px-4 py-3 text-sm leading-6 text-pine">
+          {state.success}
         </div>
       ) : null}
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center justify-center rounded-full bg-pine px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-pine/90 disabled:cursor-not-allowed disabled:opacity-60"
+        className={cn(
+          "w-full sm:w-auto",
+          submitVariant === "destructive" ? DESTRUCTIVE_BUTTON_CLASS : PRIMARY_BUTTON_CLASS,
+        )}
       >
         {pending ? "Working..." : submitLabel}
       </button>
@@ -65,6 +101,8 @@ export function Field({
   defaultValue,
   required,
   placeholder,
+  maxLength,
+  minLength,
 }: {
   label: string;
   name: string;
@@ -72,17 +110,21 @@ export function Field({
   defaultValue?: string;
   required?: boolean;
   placeholder?: string;
+  maxLength?: number;
+  minLength?: number;
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-ink">{label}</span>
+      <span className={LABEL_CLASS}>{label}</span>
       <input
         name={name}
         type={type}
         defaultValue={defaultValue}
         required={required}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-black/10 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-pine/40 focus:ring-2 focus:ring-pine/10"
+        maxLength={maxLength}
+        minLength={minLength}
+        className={CONTROL_CLASS}
       />
     </label>
   );
@@ -95,6 +137,8 @@ export function TextArea({
   required,
   rows = 4,
   placeholder,
+  maxLength,
+  minLength,
 }: {
   label: string;
   name: string;
@@ -102,17 +146,21 @@ export function TextArea({
   required?: boolean;
   rows?: number;
   placeholder?: string;
+  maxLength?: number;
+  minLength?: number;
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-ink">{label}</span>
+      <span className={LABEL_CLASS}>{label}</span>
       <textarea
         name={name}
         defaultValue={defaultValue}
         required={required}
         rows={rows}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-black/10 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-pine/40 focus:ring-2 focus:ring-pine/10"
+        maxLength={maxLength}
+        minLength={minLength}
+        className={cn(CONTROL_CLASS, "min-h-[7.5rem]")}
       />
     </label>
   );
@@ -131,11 +179,11 @@ export function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-ink">{label}</span>
+      <span className={LABEL_CLASS}>{label}</span>
       <select
         name={name}
         defaultValue={defaultValue}
-        className="w-full rounded-2xl border border-black/10 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-pine/40 focus:ring-2 focus:ring-pine/10"
+        className={cn(CONTROL_CLASS, "min-h-12 appearance-none")}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

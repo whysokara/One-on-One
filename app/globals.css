@@ -4,10 +4,17 @@
 
 :root {
   color-scheme: light;
+  --app-max-width: 78rem;
 }
 
 * {
   box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  border-color: rgba(25, 33, 38, 0.08);
 }
 
 html,
@@ -21,8 +28,16 @@ body {
   color: #192126;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: "Avenir Next", "Helvetica Neue", "Segoe UI", sans-serif;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -39,4 +54,22 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(25, 33, 38, 0.42);
+}
+
+input[type="date"] {
+  min-height: 3rem;
+}
+
+textarea {
+  resize: vertical;
 }

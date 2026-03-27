@@ -20,7 +20,7 @@ const config: Config = {
         card: "0 20px 45px rgba(25, 33, 38, 0.08)",
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
+        sans: ["Avenir Next", "Helvetica Neue", "Segoe UI", "sans-serif"],
       },
     },
   },

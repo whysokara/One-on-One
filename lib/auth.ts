@@ -67,6 +67,27 @@ async function verifyIdToken(idToken: string) {
   return result.payload;
 }
 
+function mapAuthError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "Authentication failed.";
+  }
+
+  switch (error.name) {
+    case "UsernameExistsException":
+      return "An account with this email already exists.";
+    case "InvalidPasswordException":
+      return "Password does not meet the required complexity.";
+    case "NotAuthorizedException":
+      return "Email or password is incorrect.";
+    case "UserNotConfirmedException":
+      return "This account is not confirmed yet.";
+    case "UserNotFoundException":
+      return "No account was found for this email.";
+    default:
+      return error.message || "Authentication failed.";
+  }
+}
+
 function extractRole(payload: JWTPayload) {
   const role = payload["custom:role"];
   if (role === "manager" || role === "reportee") {
@@ -96,11 +117,13 @@ export async function getCurrentUser(): Promise<User | null> {
 
   let tokens = decodeTokens(rawCookie);
   if (!tokens) {
+    await clearSession();
     return null;
   }
 
   try {
     if (tokens.expiresAt <= Date.now()) {
+      await clearSession();
       return null;
     }
 
@@ -119,6 +142,7 @@ export async function getCurrentUser(): Promise<User | null> {
     const fullName = extractString(payload, "name");
     const email = extractString(payload, "email");
     if (!role || !fullName || !email) {
+      await clearSession();
       return null;
     }
 
@@ -129,6 +153,7 @@ export async function getCurrentUser(): Promise<User | null> {
       role,
     });
   } catch {
+    await clearSession();
     return null;
   }
 }
@@ -159,18 +184,22 @@ export async function signUp(input: {
   const client = getCognitoClient();
   const email = normalizeEmail(input.email);
 
-  await client.send(
-    new SignUpCommand({
-      ClientId: config.cognitoUserPoolClientId,
-      Username: email,
-      Password: input.password,
-      UserAttributes: [
-        { Name: "email", Value: email },
-        { Name: "name", Value: input.fullName.trim() },
-        { Name: "custom:role", Value: input.role },
-      ],
-    }),
-  );
+  try {
+    await client.send(
+      new SignUpCommand({
+        ClientId: config.cognitoUserPoolClientId,
+        Username: email,
+        Password: input.password,
+        UserAttributes: [
+          { Name: "email", Value: email },
+          { Name: "name", Value: input.fullName.trim() },
+          { Name: "custom:role", Value: input.role },
+        ],
+      }),
+    );
+  } catch (error) {
+    throw new Error(mapAuthError(error));
+  }
 
   const user = await logIn({
     email,
@@ -190,16 +219,21 @@ export async function signUp(input: {
 export async function logIn(input: { email: string; password: string }) {
   const config = requireAwsConfig();
   const client = getCognitoClient();
-  const result = await client.send(
-    new InitiateAuthCommand({
-      ClientId: config.cognitoUserPoolClientId,
-      AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
-      AuthParameters: {
-        USERNAME: normalizeEmail(input.email),
-        PASSWORD: input.password,
-      },
-    }),
-  );
+  let result;
+  try {
+    result = await client.send(
+      new InitiateAuthCommand({
+        ClientId: config.cognitoUserPoolClientId,
+        AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
+        AuthParameters: {
+          USERNAME: normalizeEmail(input.email),
+          PASSWORD: input.password,
+        },
+      }),
+    );
+  } catch (error) {
+    throw new Error(mapAuthError(error));
+  }
 
   const tokens = tokensFromAuthResult(result.AuthenticationResult ?? {});
   await setSession(tokens);

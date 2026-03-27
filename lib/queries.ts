@@ -8,7 +8,8 @@ import {
   getBoardForReportee,
   getUserById,
 } from "@/lib/db";
-import { Board, Entry, User } from "@/lib/types";
+import { Board, Entry, EntryVisibility, User } from "@/lib/types";
+import { ALL_CATEGORIES } from "@/lib/constants";
 
 export async function getManagerDashboard(managerId: string) {
   const board = await getManagerBoard(managerId);
@@ -136,6 +137,22 @@ export function filterEntries(entries: Entry[], category: string, visibility: st
     const visibilityOk = visibility === "all" || entry.visibility === visibility;
     return categoryOk && visibilityOk;
   });
+}
+
+export function normalizeEntryCategoryFilter(value?: string) {
+  if (!value || value === "all") {
+    return "all";
+  }
+
+  return ALL_CATEGORIES.includes(value as Entry["category"]) ? value : "all";
+}
+
+export function normalizeEntryVisibilityFilter(value?: string) {
+  if (!value || value === "all") {
+    return "all";
+  }
+
+  return value === "shared" || value === "manager_private" ? (value satisfies EntryVisibility) : "all";
 }
 
 export type MemberCard = User & {

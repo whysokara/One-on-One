@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { AddSharedEntryForm, DeleteSharedEntryForm, EditSharedEntryForm } from "@/components/entry-forms";
-import { EmptyState, AppFrame, SectionCard, TimelineCard } from "@/components/ui";
+import { AddSharedEntryForm, SharedEntryCard } from "@/components/entry-forms";
+import { EmptyState, AppFrame, PageHeader, SectionCard } from "@/components/ui";
 import { SHARED_CATEGORIES } from "@/lib/constants";
 import { requireRole } from "@/lib/auth";
-import { filterEntries, getEmployeeHome } from "@/lib/queries";
+import { filterEntries, getEmployeeHome, normalizeEntryCategoryFilter } from "@/lib/queries";
 import { slugifyCategory } from "@/lib/utils";
 
 export default async function EmployeePage({
@@ -12,20 +12,25 @@ export default async function EmployeePage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const user = await requireRole("reportee");
-  const { category = "all" } = await searchParams;
+  const { category: rawCategory } = await searchParams;
+  const category = normalizeEntryCategoryFilter(rawCategory);
   const payload = await getEmployeeHome(user.id);
 
   if (!payload.board) {
     return (
       <AppFrame user={user}>
-        <SectionCard title="Join Your Manager's Board">
-          <p className="max-w-2xl text-sm leading-6 text-ink/75">
-            You have an account, but you are not attached to a board yet. Ask your manager for the invite code or link.
-          </p>
-          <Link href="/join" className="mt-4 inline-flex rounded-full bg-pine px-4 py-2.5 text-sm font-semibold text-white">
-            Join Board
-          </Link>
-        </SectionCard>
+        <div className="flex w-full flex-col gap-5">
+          <PageHeader
+            eyebrow="Employee Workspace"
+            title="You’re signed in but not attached to a board yet."
+            description="Ask your manager for an invite code or join link. Once you join, this page becomes your running work timeline."
+          />
+          <SectionCard title="Join your manager’s board">
+            <Link href="/join" className="inline-flex min-h-11 items-center rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-white">
+              Join board
+            </Link>
+          </SectionCard>
+        </div>
       </AppFrame>
     );
   }
@@ -34,38 +39,29 @@ export default async function EmployeePage({
 
   return (
     <AppFrame user={user}>
-      <div className="space-y-5">
-        <section className="rounded-[28px] border border-white/70 bg-white/88 p-5 shadow-card md:p-6">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">My Timeline</div>
-              <h1 className="mt-2 text-[2.2rem] font-semibold tracking-[-0.05em] text-ink">{payload.board.name}</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/70">
-                Add proof of work as it happens. Everything here is visible to your manager and easy to revisit during appraisal time.
-              </p>
+      <div className="flex w-full flex-col gap-5">
+        <PageHeader
+          eyebrow="My Timeline"
+          title={payload.board.name}
+          description="Add proof of work as it happens. Everything here is visible to your manager and easy to revisit during appraisal time."
+          aside={
+            <div className="rounded-[22px] bg-fog px-4 py-4 text-sm text-ink/70">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/45">Manager</div>
+              <div className="mt-1.5 text-base font-semibold text-ink">{payload.manager.fullName}</div>
             </div>
-            <div className="rounded-2xl bg-fog px-3.5 py-2.5 text-sm text-ink/70">
-              Manager: <span className="font-medium text-ink">{payload.manager.fullName}</span>
-            </div>
-          </div>
-        </section>
+          }
+        />
 
-        <div className="grid gap-5 xl:grid-cols-[1.28fr_0.92fr]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_22rem]">
           <div className="space-y-5">
-            <SectionCard title="Add Entry">
+            <SectionCard title="Add entry" description="Keep updates short, specific, and easy to revisit later.">
               <AddSharedEntryForm boardId={payload.board.id} categories={SHARED_CATEGORIES} />
             </SectionCard>
-            <SectionCard title="My Entries">
+            <SectionCard title="My entries" description="Everything below is part of the shared employee timeline.">
               <div className="space-y-4">
                 {visibleEntries.length ? (
                   visibleEntries.map((entry) => (
-                    <div key={entry.id} className="rounded-[20px] bg-fog p-4">
-                      <TimelineCard date={entry.entryDate} category={entry.category} title={entry.title} description={entry.description} />
-                      <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                        <EditSharedEntryForm entry={entry} categories={SHARED_CATEGORIES} />
-                        <DeleteSharedEntryForm entryId={entry.id} />
-                      </div>
-                    </div>
+                    <SharedEntryCard key={entry.id} entry={entry} categories={SHARED_CATEGORIES} />
                   ))
                 ) : (
                   <EmptyState title="No entries yet" body="Use the quick add form above. The MVP is optimized for short, frequent updates." />
@@ -74,10 +70,10 @@ export default async function EmployeePage({
             </SectionCard>
           </div>
 
-          <div className="space-y-5">
-            <SectionCard title="Filter Timeline">
+          <div className="space-y-5 xl:sticky xl:top-24 xl:self-start">
+            <SectionCard title="Filter timeline" description="Narrow the list when you want to scan a specific kind of work evidence.">
               <form className="grid gap-3 md:grid-cols-[1fr_auto]">
-                <select name="category" defaultValue={category} className="rounded-2xl border border-black/10 bg-white px-3.5 py-2.5 text-sm">
+                <select name="category" defaultValue={category} className="min-h-12 rounded-[18px] border border-black/10 bg-white px-4 py-3 text-sm text-ink">
                   <option value="all">All Categories</option>
                   {SHARED_CATEGORIES.map((option) => (
                     <option key={option} value={option}>
@@ -85,22 +81,24 @@ export default async function EmployeePage({
                     </option>
                   ))}
                 </select>
-                <button className="rounded-full bg-pine px-4 py-2.5 text-sm font-semibold text-white">Apply</button>
+                <button className="inline-flex min-h-11 items-center justify-center rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-white">
+                  Apply
+                </button>
               </form>
             </SectionCard>
-            <SectionCard title="Announcements">
-            <div className="space-y-2.5">
-              {payload.announcements.length ? (
-                payload.announcements.map((announcement) => (
-                  <article key={announcement.id} className="rounded-[18px] bg-sand p-3.5">
-                    <h3 className="text-base font-semibold text-ink">{announcement.title}</h3>
-                    <p className="mt-1.5 text-sm leading-6 text-ink/75">{announcement.message}</p>
-                  </article>
-                ))
-              ) : (
-                <EmptyState title="No announcements yet" body="This section will show team-wide updates from your manager." />
-              )}
-            </div>
+            <SectionCard title="Announcements" description="Team-wide reminders and rollout notes from your manager.">
+              <div className="space-y-3">
+                {payload.announcements.length ? (
+                  payload.announcements.map((announcement) => (
+                    <article key={announcement.id} className="rounded-[20px] bg-sand p-4">
+                      <h3 className="text-base font-semibold text-ink">{announcement.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-ink/75">{announcement.message}</p>
+                    </article>
+                  ))
+                ) : (
+                  <EmptyState title="No announcements yet" body="This section will show team-wide updates from your manager." />
+                )}
+              </div>
             </SectionCard>
           </div>
         </div>

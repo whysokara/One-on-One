@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "clean": "rm -rf .next",
     "dev": "next dev",
+    "dev:reset": "npm run clean && next dev --hostname 127.0.0.1 --port 3000",
     "build": "next build",
     "start": "next start",
+    "test": "tsx --test tests/**/*.test.ts",
     "lint": "next lint",
     "infra:synth": "npx cdk synth --app 'tsx infra/bin/oneonone.ts'",
     "infra:deploy": "npx cdk deploy --app 'tsx infra/bin/oneonone.ts'"

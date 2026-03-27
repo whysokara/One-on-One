@@ -11,6 +11,7 @@ import {
   createEntry,
   deleteEntry,
   getBoardById,
+  getBoardForReportee,
   getBoardByInviteCode,
   getEntryById,
   getManagerBoard,
@@ -19,15 +20,33 @@ import {
 } from "@/lib/db";
 import { ensureManagerOwnsBoard, ensureReporteeBelongsToBoard } from "@/lib/queries";
 import { EntryCategory, UserRole } from "@/lib/types";
+import {
+  validateAnnouncementMessage,
+  validateAnnouncementTitle,
+  validateBoardName,
+  validateEmail,
+  validateEntryTitle,
+  validateFullName,
+  validateInviteCode,
+  validateIsoDate,
+  validateLongText,
+  validatePassword,
+} from "@/lib/validation";
 
 export type FormState = {
   error?: string;
+  success?: string;
+  submissionId?: number;
 };
 
 const EMPTY_STATE: FormState = {};
 
 function fail(message: string): FormState {
-  return { error: message };
+  return { error: message, submissionId: Date.now() };
+}
+
+function succeed(message: string): FormState {
+  return { success: message, submissionId: Date.now() };
 }
 
 function rethrowRedirectError(error: unknown) {
@@ -56,9 +75,7 @@ function assertCategory(category: string, allowed: string[]): EntryCategory {
 }
 
 function assertDate(value: string) {
-  if (!value || Number.isNaN(new Date(value).getTime())) {
-    throw new Error("Invalid date.");
-  }
+  validateIsoDate(value);
   return value;
 }
 
@@ -68,6 +85,10 @@ export async function signupAction(_: FormState | undefined, formData: FormData)
     const email = readRequired(formData, "email", "Email");
     const password = readRequired(formData, "password", "Password");
     const role = readRequired(formData, "role", "Role") as UserRole;
+
+    validateFullName(fullName);
+    validateEmail(email);
+    validatePassword(password);
 
     if (!["manager", "reportee"].includes(role)) {
       return fail("Invalid role.");
@@ -85,6 +106,7 @@ export async function loginAction(_: FormState | undefined, formData: FormData) 
   try {
     const email = readRequired(formData, "email", "Email");
     const password = readRequired(formData, "password", "Password");
+    validateEmail(email);
     const user = await logIn({ email, password });
     redirect(user.role === "manager" ? "/manager" : "/employee");
   } catch (error) {
@@ -102,11 +124,12 @@ export async function createBoardAction(_: FormState | undefined, formData: Form
   try {
     const manager = await requireRole("manager");
     if (await getManagerBoard(manager.id)) {
-      return fail("You already have a board.");
+      redirect("/manager");
     }
 
     const name = readRequired(formData, "name", "Board name");
     const description = readString(formData, "description");
+    validateBoardName(name);
     const board = await createBoard({ managerId: manager.id, name, description });
     redirect(`/manager/board/${board.id}`);
   } catch (error) {
@@ -120,10 +143,23 @@ export async function joinBoardAction(_: FormState | undefined, formData: FormDa
     const reportee = await requireRole("reportee");
     const inviteCode = readString(formData, "inviteCode");
     const boardId = readString(formData, "boardId");
+    const currentBoard = await getBoardForReportee(reportee.id);
+
+    if (!boardId) {
+      validateInviteCode(inviteCode);
+    }
 
     const board = boardId ? await getBoardById(boardId) : await getBoardByInviteCode(inviteCode);
     if (!board) {
       return fail("Invalid invite code or link.");
+    }
+
+    if (currentBoard?.id === board.id) {
+      redirect("/employee");
+    }
+
+    if (currentBoard && currentBoard.id !== board.id) {
+      return fail(`You are already attached to "${currentBoard.name}". One-on-One currently supports one board per reportee.`);
     }
 
     await joinBoard(board.id, reportee.id);
@@ -147,6 +183,8 @@ export async function createSharedEntryAction(_: FormState | undefined, formData
     const description = readRequired(formData, "description", "Description");
     const category = assertCategory(readRequired(formData, "category", "Category"), SHARED_CATEGORIES);
     const entryDate = assertDate(readRequired(formData, "entryDate", "Date"));
+    validateEntryTitle(title);
+    validateLongText("Description", description);
 
     await createEntry({
       boardId,
@@ -160,7 +198,7 @@ export async function createSharedEntryAction(_: FormState | undefined, formData
     });
 
     revalidatePath("/employee");
-    return EMPTY_STATE;
+    return succeed("Entry saved.");
   } catch (error) {
     rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to save entry.");
@@ -180,6 +218,8 @@ export async function updateSharedEntryAction(_: FormState | undefined, formData
     const description = readRequired(formData, "description", "Description");
     const category = assertCategory(readRequired(formData, "category", "Category"), SHARED_CATEGORIES);
     const entryDate = assertDate(readRequired(formData, "entryDate", "Date"));
+    validateEntryTitle(title);
+    validateLongText("Description", description);
 
     await updateEntry({
       entryId,
@@ -190,7 +230,7 @@ export async function updateSharedEntryAction(_: FormState | undefined, formData
     });
 
     revalidatePath("/employee");
-    return EMPTY_STATE;
+    return succeed("Entry updated.");
   } catch (error) {
     rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to update entry.");
@@ -207,7 +247,7 @@ export async function deleteSharedEntryAction(_: FormState | undefined, formData
     }
     await deleteEntry(entryId);
     revalidatePath("/employee");
-    return EMPTY_STATE;
+    return succeed("Entry deleted.");
   } catch (error) {
     rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to delete entry.");
@@ -229,6 +269,8 @@ export async function createPrivateNoteAction(_: FormState | undefined, formData
     const description = readRequired(formData, "description", "Description");
     const category = assertCategory(readRequired(formData, "category", "Category"), MANAGER_CATEGORIES);
     const entryDate = assertDate(readRequired(formData, "entryDate", "Date"));
+    validateEntryTitle(title);
+    validateLongText("Description", description);
 
     await createEntry({
       boardId,
@@ -242,7 +284,7 @@ export async function createPrivateNoteAction(_: FormState | undefined, formData
     });
 
     revalidatePath(`/manager/board/${boardId}/employee/${employeeId}`);
-    return EMPTY_STATE;
+    return succeed("Private note saved.");
   } catch (error) {
     rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to save note.");
@@ -260,6 +302,8 @@ export async function createAnnouncementAction(_: FormState | undefined, formDat
 
     const title = readRequired(formData, "title", "Title");
     const message = readRequired(formData, "message", "Message");
+    validateAnnouncementTitle(title);
+    validateAnnouncementMessage(message);
 
     await createAnnouncement({
       boardId,
@@ -270,7 +314,7 @@ export async function createAnnouncementAction(_: FormState | undefined, formDat
 
     revalidatePath(`/manager/board/${boardId}`);
     revalidatePath("/employee");
-    return EMPTY_STATE;
+    return succeed("Announcement published.");
   } catch (error) {
     rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to publish announcement.");
