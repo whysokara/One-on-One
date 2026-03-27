@@ -1,0 +1,8 @@
+.next
+node_modules
+data
+npm-debug.log*
+.env.local
+.env*.local
+delete.txt
+cdk.out

@@ -1,0 +1,38 @@
+{
+  "name": "oneonone",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "infra:synth": "npx cdk synth --app 'tsx infra/bin/oneonone.ts'",
+    "infra:deploy": "npx cdk deploy --app 'tsx infra/bin/oneonone.ts'"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.883.0",
+    "@aws-sdk/client-dynamodb": "^3.883.0",
+    "@aws-sdk/lib-dynamodb": "^3.883.0",
+    "clsx": "^2.1.1",
+    "jose": "^6.0.12",
+    "next": "^15.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.1",
+    "@types/react-dom": "^19.1.2",
+    "aws-cdk": "^2.1030.0",
+    "aws-cdk-lib": "^2.193.0",
+    "constructs": "^10.4.2",
+    "eslint": "^9.23.0",
+    "eslint-config-next": "^15.3.0",
+    "playwright-core": "^1.58.2",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}
