@@ -10,7 +10,7 @@ export default async function SignupPage() {
   return (
     <AppFrame user={user}>
       <div className="mx-auto max-w-xl">
-        <FormShell title="Create your One-on-One account" description="Use the role selector so the app can route you to the right experience immediately.">
+        <FormShell title="Create Your One-on-One Account" description="Choose your role once and the app will route you into the right workspace immediately.">
           <SignupForm />
           <p className="mt-4 text-sm text-ink/60">
             Already have an account?{" "}

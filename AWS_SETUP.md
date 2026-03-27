@@ -1,4 +1,4 @@
-# Oneonone AWS Setup
+# One-on-One AWS Setup
 
 ## What Codex implemented
 - Cognito-backed auth in the Next.js app

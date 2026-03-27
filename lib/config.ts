@@ -70,7 +70,7 @@ export function getAwsConfig(): AwsAppConfig | null {
 export function requireAwsConfig() {
   const config = getAwsConfig();
   if (!config) {
-    throw new Error("AWS configuration is missing. Set the Oneonone environment variables before using the app.");
+    throw new Error("AWS configuration is missing. Set the One-on-One environment variables before using the app.");
   }
   return config;
 }

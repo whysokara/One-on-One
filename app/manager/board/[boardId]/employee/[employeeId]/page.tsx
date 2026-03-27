@@ -4,7 +4,7 @@ import { EmptyState, AppFrame, SectionCard, TimelineCard } from "@/components/ui
 import { MANAGER_CATEGORIES } from "@/lib/constants";
 import { requireRole } from "@/lib/auth";
 import { filterEntries, getManagerEmployeeView } from "@/lib/queries";
-import { formatRelativeDate } from "@/lib/utils";
+import { formatRelativeDate, slugifyCategory } from "@/lib/utils";
 
 export default async function ManagerEmployeePage({
   params,
@@ -32,21 +32,21 @@ export default async function ManagerEmployeePage({
 
   return (
     <AppFrame user={user}>
-      <div className="space-y-8">
+      <div className="space-y-5">
         <div className="flex items-center gap-3 text-sm text-ink/60">
           <Link href={`/manager/board/${boardId}`} className="font-medium text-pine">
-            Back to board
+            Back to Board
           </Link>
           <span>/</span>
           <span>{payload.employee.fullName}</span>
         </div>
 
-        <section className="rounded-[32px] bg-white/85 p-8 shadow-card">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <section className="rounded-[28px] border border-white/70 bg-white/88 p-5 shadow-card md:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="text-sm uppercase tracking-[0.16em] text-ink/45">Employee timeline</div>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink">{payload.employee.fullName}</h1>
-              <p className="mt-2 text-sm text-ink/65">{payload.employee.email}</p>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-ink/45">Employee Timeline</div>
+              <h1 className="mt-2 text-[2.2rem] font-semibold tracking-[-0.05em] text-ink">{payload.employee.fullName}</h1>
+              <p className="mt-1.5 text-sm text-ink/65">{payload.employee.email}</p>
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-ink/70">
               <div className="rounded-full bg-sand px-4 py-2">{sharedCount} shared entries</div>
@@ -55,17 +55,17 @@ export default async function ManagerEmployeePage({
           </div>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-6">
+        <div className="grid gap-5 xl:grid-cols-[1.28fr_0.92fr]">
+          <div className="space-y-5">
             <SectionCard title="Filters">
-              <form className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+              <form className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
                 <input type="hidden" name="boardId" value={boardId} />
                 <select
                   name="category"
                   defaultValue={category}
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm"
+                  className="rounded-2xl border border-black/10 bg-white px-3.5 py-2.5 text-sm"
                 >
-                  <option value="all">All categories</option>
+                  <option value="all">All Categories</option>
                   {[
                     "achievement",
                     "learning",
@@ -81,20 +81,20 @@ export default async function ManagerEmployeePage({
                     "coaching_note",
                   ].map((option) => (
                     <option key={option} value={option}>
-                      {option.replaceAll("_", " ")}
+                      {slugifyCategory(option)}
                     </option>
                   ))}
                 </select>
                 <select
                   name="visibility"
                   defaultValue={visibility}
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm"
+                  className="rounded-2xl border border-black/10 bg-white px-3.5 py-2.5 text-sm"
                 >
-                  <option value="all">All visibility</option>
-                  <option value="shared">Shared entries</option>
-                  <option value="manager_private">Manager private notes</option>
+                  <option value="all">All Visibility</option>
+                  <option value="shared">Shared Entries</option>
+                  <option value="manager_private">Manager Private Notes</option>
                 </select>
-                <button className="rounded-full bg-pine px-5 py-3 text-sm font-medium text-white">Apply</button>
+                <button className="rounded-full bg-pine px-4 py-2.5 text-sm font-semibold text-white">Apply</button>
               </form>
             </SectionCard>
 
@@ -118,7 +118,7 @@ export default async function ManagerEmployeePage({
             </SectionCard>
           </div>
 
-          <SectionCard title="Add private note">
+          <SectionCard title="Add Private Note">
             <AddPrivateNoteForm boardId={boardId} employeeId={employeeId} categories={MANAGER_CATEGORIES} />
           </SectionCard>
         </div>

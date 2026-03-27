@@ -211,7 +211,7 @@ export async function logIn(input: { email: string; password: string }) {
   const role = extractRole(payload);
 
   if (!userId || !fullName || !email || !role) {
-    throw new Error("Your Cognito profile is missing required Oneonone attributes.");
+    throw new Error("Your Cognito profile is missing required One-on-One attributes.");
   }
 
   return ensureUserProfile({

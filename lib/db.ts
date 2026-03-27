@@ -99,7 +99,7 @@ export async function ensureUserProfile(input: {
   } catch {
     const current = await getUserById(input.id);
     if (!current) {
-      throw new Error("Unable to create Oneonone user profile.");
+      throw new Error("Unable to create One-on-One user profile.");
     }
     return current;
   }

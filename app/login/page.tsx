@@ -10,12 +10,12 @@ export default async function LoginPage() {
   return (
     <AppFrame user={user}>
       <div className="mx-auto max-w-xl">
-        <FormShell title="Log in" description="Sessions persist after refresh so teams can use the app through the year without friction.">
+        <FormShell title="Log In" description="Pick up exactly where you left off. One-on-One keeps review evidence visible all year.">
           <LoginForm />
           <p className="mt-4 text-sm text-ink/60">
             Need an account?{" "}
             <Link href="/signup" className="font-medium text-pine">
-              Sign up
+              Create one
             </Link>
           </p>
         </FormShell>
