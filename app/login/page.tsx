@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth-forms";
 import { FormShell } from "@/components/forms";
 import { AppFrame } from "@/components/ui";
@@ -6,6 +7,10 @@ import { getCurrentUser } from "@/lib/auth";
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
+
+  if (user) {
+    redirect(user.role === "manager" ? "/manager" : "/employee");
+  }
 
   return (
     <AppFrame user={user}>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { clearSession, logIn, requireRole, signUp } from "@/lib/auth";
 import { MANAGER_CATEGORIES, SHARED_CATEGORIES } from "@/lib/constants";
 import {
@@ -27,6 +28,12 @@ const EMPTY_STATE: FormState = {};
 
 function fail(message: string): FormState {
   return { error: message };
+}
+
+function rethrowRedirectError(error: unknown) {
+  if (isRedirectError(error)) {
+    throw error;
+  }
 }
 
 function readString(formData: FormData, key: string) {
@@ -69,6 +76,7 @@ export async function signupAction(_: FormState | undefined, formData: FormData)
     const user = await signUp({ fullName, email, password, role });
     redirect(user.role === "manager" ? "/manager" : "/employee");
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to sign up.");
   }
 }
@@ -80,6 +88,7 @@ export async function loginAction(_: FormState | undefined, formData: FormData) 
     const user = await logIn({ email, password });
     redirect(user.role === "manager" ? "/manager" : "/employee");
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to log in.");
   }
 }
@@ -101,6 +110,7 @@ export async function createBoardAction(_: FormState | undefined, formData: Form
     const board = await createBoard({ managerId: manager.id, name, description });
     redirect(`/manager/board/${board.id}`);
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to create board.");
   }
 }
@@ -119,6 +129,7 @@ export async function joinBoardAction(_: FormState | undefined, formData: FormDa
     await joinBoard(board.id, reportee.id);
     redirect("/employee");
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to join board.");
   }
 }
@@ -151,6 +162,7 @@ export async function createSharedEntryAction(_: FormState | undefined, formData
     revalidatePath("/employee");
     return EMPTY_STATE;
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to save entry.");
   }
 }
@@ -180,6 +192,7 @@ export async function updateSharedEntryAction(_: FormState | undefined, formData
     revalidatePath("/employee");
     return EMPTY_STATE;
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to update entry.");
   }
 }
@@ -196,6 +209,7 @@ export async function deleteSharedEntryAction(_: FormState | undefined, formData
     revalidatePath("/employee");
     return EMPTY_STATE;
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to delete entry.");
   }
 }
@@ -230,6 +244,7 @@ export async function createPrivateNoteAction(_: FormState | undefined, formData
     revalidatePath(`/manager/board/${boardId}/employee/${employeeId}`);
     return EMPTY_STATE;
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to save note.");
   }
 }
@@ -257,6 +272,7 @@ export async function createAnnouncementAction(_: FormState | undefined, formDat
     revalidatePath("/employee");
     return EMPTY_STATE;
   } catch (error) {
+    rethrowRedirectError(error);
     return fail(error instanceof Error ? error.message : "Unable to publish announcement.");
   }
 }

@@ -46,9 +46,9 @@ export function AppFrame({
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 text-xs text-ink/58 md:flex-row md:items-center md:justify-between md:px-6">
           <p>{new Date().getFullYear()} One-on-One. Performance memory for serious teams.</p>
           <p>
-            Made by kara ·{" "}
+            Made by{" "}
             <a href="https://x.com/whysokara" target="_blank" rel="noreferrer" className="font-medium text-pine">
-              @whysokara
+              kara
             </a>
           </p>
         </div>
