@@ -26,10 +26,17 @@ export function AddSharedEntryForm({
   categories: string[];
 }) {
   return (
-    <ActionForm action={createSharedEntryAction} submitLabel="Save entry" resetOnSuccess>
+    <ActionForm action={createSharedEntryAction} submitLabel="Save entry" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Title" name="title" required placeholder="Closed a major stakeholder loop" maxLength={VALIDATION_LIMITS.titleMax} />
+        <Field
+          label="Title"
+          name="title"
+          required
+          placeholder="Closed a major stakeholder loop"
+          minLength={VALIDATION_LIMITS.titleMin}
+          maxLength={VALIDATION_LIMITS.titleMax}
+        />
         <Field label="Date" name="entryDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
       </div>
       <SelectField label="Category" name="category" options={categoryOptions(categories)} />
@@ -38,6 +45,7 @@ export function AddSharedEntryForm({
         name="description"
         required
         placeholder="Keep it short and specific so appraisal time is easy later."
+        minLength={VALIDATION_LIMITS.descriptionMin}
         maxLength={VALIDATION_LIMITS.descriptionMax}
       />
     </ActionForm>
@@ -54,14 +62,34 @@ export function EditSharedEntryForm({
   onSuccess?: () => void;
 }) {
   return (
-    <ActionForm action={updateSharedEntryAction} submitLabel="Update entry" className="space-y-4" onSuccess={onSuccess}>
+    <ActionForm
+      action={updateSharedEntryAction}
+      submitLabel="Update entry"
+      className="space-y-4"
+      onSuccess={onSuccess}
+      refreshOnSuccess
+    >
       <input type="hidden" name="entryId" value={entry.id} />
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Title" name="title" required defaultValue={entry.title} maxLength={VALIDATION_LIMITS.titleMax} />
+        <Field
+          label="Title"
+          name="title"
+          required
+          defaultValue={entry.title}
+          minLength={VALIDATION_LIMITS.titleMin}
+          maxLength={VALIDATION_LIMITS.titleMax}
+        />
         <Field label="Date" name="entryDate" type="date" required defaultValue={entry.entryDate} />
       </div>
       <SelectField label="Category" name="category" options={categoryOptions(categories)} defaultValue={entry.category} />
-      <TextArea label="Description" name="description" required defaultValue={entry.description} maxLength={VALIDATION_LIMITS.descriptionMax} />
+      <TextArea
+        label="Description"
+        name="description"
+        required
+        defaultValue={entry.description}
+        minLength={VALIDATION_LIMITS.descriptionMin}
+        maxLength={VALIDATION_LIMITS.descriptionMax}
+      />
     </ActionForm>
   );
 }
@@ -72,6 +100,7 @@ export function DeleteSharedEntryForm({ entryId }: { entryId: string }) {
       action={deleteSharedEntryAction}
       submitLabel="Delete entry"
       submitVariant="destructive"
+      refreshOnSuccess
       onSubmit={(event) => {
         if (!window.confirm("Delete this entry permanently?")) {
           event.preventDefault();
@@ -93,7 +122,7 @@ export function AddPrivateNoteForm({
   categories: string[];
 }) {
   return (
-    <ActionForm action={createPrivateNoteAction} submitLabel="Save note" resetOnSuccess>
+    <ActionForm action={createPrivateNoteAction} submitLabel="Save note" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
       <input type="hidden" name="employeeId" value={employeeId} />
       <div className="grid gap-4 md:grid-cols-2">
@@ -121,15 +150,23 @@ export function AddPrivateNoteForm({
 
 export function AddAnnouncementForm({ boardId }: { boardId: string }) {
   return (
-    <ActionForm action={createAnnouncementAction} submitLabel="Publish" resetOnSuccess>
+    <ActionForm action={createAnnouncementAction} submitLabel="Publish" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
-      <Field label="Title" name="title" required placeholder="Month-end reminder" maxLength={VALIDATION_LIMITS.announcementTitleMax} />
+      <Field
+        label="Title"
+        name="title"
+        required
+        placeholder="Month-end reminder"
+        minLength={VALIDATION_LIMITS.announcementTitleMin}
+        maxLength={VALIDATION_LIMITS.announcementTitleMax}
+      />
       <TextArea
         label="Message"
         name="message"
         required
         rows={5}
         placeholder="Add a short team update or prompt here."
+        minLength={VALIDATION_LIMITS.announcementMessageMin}
         maxLength={VALIDATION_LIMITS.announcementMessageMax}
       />
     </ActionForm>

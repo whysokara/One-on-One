@@ -126,6 +126,11 @@ export async function createBoard(input: {
   const client = getDocumentClient();
   const config = requireAwsConfig();
   const timestamp = now();
+  const existingBoard = await getManagerBoard(input.managerId);
+
+  if (existingBoard) {
+    throw new Error("You already have a board.");
+  }
 
   const board: BoardItem = {
     id: generateId(),
@@ -245,13 +250,20 @@ export async function joinBoard(boardId: string, userId: string) {
     userJoinedAt: now(),
   };
 
-  await client.send(
-    new PutCommand({
-      TableName: config.membershipsTable,
-      Item: membership,
-      ConditionExpression: "attribute_not_exists(id)",
-    }),
-  );
+  try {
+    await client.send(
+      new PutCommand({
+        TableName: config.membershipsTable,
+        Item: membership,
+        ConditionExpression: "attribute_not_exists(id)",
+      }),
+    );
+  } catch (error) {
+    if (error instanceof Error && error.name === "ConditionalCheckFailedException") {
+      throw new Error("You have already joined this board.");
+    }
+    throw error;
+  }
 
   return {
     id: membership.id,

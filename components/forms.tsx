@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { FormState } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ export function ActionForm({
   resetOnSuccess = false,
   onSuccess,
   onSubmit,
+  refreshOnSuccess = false,
 }: {
   action: (state: FormState | undefined, formData: FormData) => Promise<FormState | undefined>;
   children: React.ReactNode;
@@ -51,9 +53,11 @@ export function ActionForm({
   resetOnSuccess?: boolean;
   onSuccess?: () => void;
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
+  refreshOnSuccess?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<FormState | undefined, FormData>(action, EMPTY_STATE);
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!state?.success) {
@@ -65,7 +69,10 @@ export function ActionForm({
     }
 
     onSuccess?.();
-  }, [onSuccess, resetOnSuccess, state?.submissionId, state?.success]);
+    if (refreshOnSuccess) {
+      router.refresh();
+    }
+  }, [onSuccess, refreshOnSuccess, resetOnSuccess, router, state?.submissionId, state?.success]);
 
   return (
     <form ref={formRef} action={formAction} onSubmit={onSubmit} className={cn("space-y-4", className)}>
