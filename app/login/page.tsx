@@ -19,7 +19,6 @@ export default async function LoginPage() {
           <PageHeader
             eyebrow="Log In"
             title="Return to the working record."
-            description="Existing accounts go straight into the correct workspace. No duplicate setup. No alternate role path."
             aside={
               <div className="grid w-full gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
@@ -49,7 +48,7 @@ export default async function LoginPage() {
           </SectionCard>
         </div>
 
-        <FormShell title="Log in" description="Use the same work email and password used when the account was created.">
+        <FormShell title="Log in">
           <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
             This is a real Cognito-backed login. New accounts can sign up and come back later with the same credentials.
           </div>

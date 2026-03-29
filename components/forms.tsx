@@ -8,12 +8,10 @@ import { cn } from "@/lib/utils";
 const EMPTY_STATE: FormState = {};
 export function FormShell({
   title,
-  description,
   children,
   className,
 }: {
   title: string;
-  description?: string;
   children: React.ReactNode;
   className?: string;
 }) {

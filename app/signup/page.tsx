@@ -19,7 +19,6 @@ export default async function SignupPage() {
           <PageHeader
             eyebrow="Create Account"
             title="Create one account. The role decides the workspace."
-            description="Managers create and run the board. Reportees create their account first, then join the correct board with a code or link."
             aside={
               <div className="grid w-full gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
@@ -49,7 +48,7 @@ export default async function SignupPage() {
           </SectionCard>
         </div>
 
-        <FormShell title="Create account" description="You can sign up now and immediately log back in with the same credentials.">
+        <FormShell title="Create account">
           <SignupForm />
           <p className="mt-4 text-sm text-slate-500">
             Already have an account?{" "}

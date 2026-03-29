@@ -533,11 +533,14 @@ export async function getAnnouncementsForBoard(boardId: string) {
 }
 
 function stripEntryMetadata(item: EntryItem): Entry {
-  const { boardSortKey: _boardSortKey, employeeSortKey: _employeeSortKey, ...entry } = item;
+  const { boardSortKey, employeeSortKey, ...entry } = item;
+  void boardSortKey;
+  void employeeSortKey;
   return entry;
 }
 
 function stripAnnouncementMetadata(item: AnnouncementItem): Announcement {
-  const { boardSortKey: _boardSortKey, ...announcement } = item;
+  const { boardSortKey, ...announcement } = item;
+  void boardSortKey;
   return announcement;
 }

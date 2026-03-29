@@ -57,7 +57,9 @@ function tokensFromAuthResult(authResult: {
 async function verifyIdToken(idToken: string) {
   const config = requireAwsConfig();
   const issuer = getIssuer();
-  const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
+  const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`), {
+    timeoutDuration: 5000,
+  });
 
   const result = await jwtVerify(idToken, jwks, {
     issuer,
@@ -115,7 +117,7 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
 
-  let tokens = decodeTokens(rawCookie);
+  const tokens = decodeTokens(rawCookie);
   if (!tokens) {
     return null;
   }

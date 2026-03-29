@@ -40,10 +40,10 @@ export default async function HomePage() {
         {/* Right Column: Flat App Preview */}
         <div className="panel flex h-full max-h-[700px] w-full flex-col overflow-hidden lg:w-7/12">
           <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-6 py-4">
-             <div className="flex gap-2">
-               <div className="w-3 h-3 rounded-full bg-slate-200" />
-               <div className="w-3 h-3 rounded-full bg-slate-200" />
-               <div className="w-3 h-3 rounded-full bg-slate-200" />
+             <div className="flex gap-1.5">
+               <div className="h-2.5 w-2.5 rounded-full bg-red-400 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35),0_1px_2px_rgba(15,23,42,0.08)]" />
+               <div className="h-2.5 w-2.5 rounded-full bg-amber-400 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35),0_1px_2px_rgba(15,23,42,0.08)]" />
+               <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35),0_1px_2px_rgba(15,23,42,0.08)]" />
              </div>
              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Live Timeline</div>
           </div>

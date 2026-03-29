@@ -1,15 +1,12 @@
-const OPTIONAL_ENV_KEYS = [
-  "AWS_REGION",
-  "COGNITO_USER_POOL_ID",
-  "COGNITO_USER_POOL_CLIENT_ID",
-  "DDB_USERS_TABLE",
-  "DDB_BOARDS_TABLE",
-  "DDB_MEMBERSHIPS_TABLE",
-  "DDB_ENTRIES_TABLE",
-  "DDB_ANNOUNCEMENTS_TABLE",
-] as const;
-
-type OptionalEnvKey = (typeof OPTIONAL_ENV_KEYS)[number];
+type OptionalEnvKey =
+  | "AWS_REGION"
+  | "COGNITO_USER_POOL_ID"
+  | "COGNITO_USER_POOL_CLIENT_ID"
+  | "DDB_USERS_TABLE"
+  | "DDB_BOARDS_TABLE"
+  | "DDB_MEMBERSHIPS_TABLE"
+  | "DDB_ENTRIES_TABLE"
+  | "DDB_ANNOUNCEMENTS_TABLE";
 
 export type AwsAppConfig = {
   awsRegion: string;

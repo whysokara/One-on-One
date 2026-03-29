@@ -31,7 +31,6 @@ export default async function EmployeePage() {
       <div className="flex w-full flex-col gap-4">
         <PageHeader
           title={payload.board.name}
-          description={`Manager: ${payload.manager.fullName}`}
         />
 
         <InfoStrip

@@ -36,7 +36,13 @@ test("global error and not-found pages exist", () => {
 test("next config allows the local dev origin", () => {
   const contents = readFileSync(routeFile("next.config.ts"), "utf8");
   assert.match(contents, /allowedDevOrigins/);
+  assert.match(contents, /192\.168\.1\.3:3000/);
   assert.match(contents, /192\.168\.1\.9:3000/);
+});
+
+test("amplify build ignores the next lockfile patch step", () => {
+  const contents = readFileSync(routeFile("amplify.yml"), "utf8");
+  assert.match(contents, /NEXT_IGNORE_INCORRECT_LOCKFILE=true npm run build/);
 });
 
 test("shared shell stays mobile-friendly and does not show enterprise branding", () => {

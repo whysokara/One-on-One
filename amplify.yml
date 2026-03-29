@@ -6,7 +6,7 @@ frontend:
         - npm ci
     build:
       commands:
-        - npm run build
+        - NEXT_IGNORE_INCORRECT_LOCKFILE=true npm run build
   artifacts:
     baseDirectory: .next
     files:

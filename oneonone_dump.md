@@ -43,7 +43,7 @@ This document captures the current state of the **One-on-One** app so you can pr
 - Behavior: shared timeline table, consistent cards, tight spacing, cohesive header/footer/section layout.
 
 ## 6. Setup guide
-1. Copy `.env.local` from `.env.example` and fill AWS env vars (`COGNITO_*`, `DDB_*`, `AWS_REGION`, `APP_BASE_URL`).
+1. Copy `.env.local` from `.env.example` and fill AWS env vars (`COGNITO_*`, `DDB_*`, `AWS_REGION`).
 2. Run `npm install`.
 3. Start dev server with `npm run dev:reset` (ensures clean cache); use `npm run dev` for normal running.
 4. Build via `npm run build`; tests run with `npm test` (requires IPC access).

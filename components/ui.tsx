@@ -80,13 +80,11 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
 export function PageHeader({
   eyebrow,
   title,
-  description,
   aside,
   className,
 }: {
   eyebrow?: string;
   title: string;
-  description?: string;
   aside?: React.ReactNode;
   className?: string;
 }) {
@@ -131,13 +129,11 @@ export function InfoStrip({
 export function SectionCard({
   title,
   children,
-  description,
   actions,
   className,
 }: {
   title: string;
   children: React.ReactNode;
-  description?: string;
   actions?: React.ReactNode;
   className?: string;
 }) {

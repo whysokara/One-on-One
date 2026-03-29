@@ -25,11 +25,11 @@
    - `DDB_MEMBERSHIPS_TABLE`
    - `DDB_ENTRIES_TABLE`
    - `DDB_ANNOUNCEMENTS_TABLE`
-   - `APP_BASE_URL`
 6. For local development, create `.env.local` from `.env.example`.
 7. For hosting, create an Amplify app in AWS and connect your repo/branch.
 8. Add the same environment variables in Amplify Hosting.
-9. Trigger the first Amplify deployment.
+9. Set `NEXT_IGNORE_INCORRECT_LOCKFILE=true` in the Amplify build command.
+10. Trigger the first Amplify deployment.
 
 ## Recommended Amplify settings
 - Framework: Next.js SSR
@@ -42,3 +42,4 @@
 - Email verification is optional in this stack.
 - The app expects Cognito custom attribute `custom:role`.
 - The app uses AWS runtime credentials; local development needs valid AWS credentials in your shell.
+- Invite links are built from the incoming request host, so `APP_BASE_URL` is no longer required.
