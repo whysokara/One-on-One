@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth-forms";
 import { FormShell } from "@/components/forms";
 import { AppFrame, PageHeader, SectionCard } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { peekCurrentUser } from "@/lib/auth";
 
 export default async function SignupPage() {
-  const user = await getCurrentUser();
+  const user = await peekCurrentUser();
 
   if (user) {
     redirect(user.role === "manager" ? "/manager" : "/employee");

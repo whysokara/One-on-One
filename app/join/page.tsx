@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { ActionForm, Field, FormShell } from "@/components/forms";
 import { AppFrame, PageHeader, SectionCard } from "@/components/ui";
 import { joinBoardAction } from "@/lib/actions";
-import { requireRole } from "@/lib/auth";
+import { peekCurrentUser, requireRole } from "@/lib/auth";
 import { getBoardById, getBoardForReportee } from "@/lib/db";
 
 export default async function JoinPage({
@@ -10,7 +10,7 @@ export default async function JoinPage({
 }: {
   searchParams: Promise<{ boardId?: string }>;
 }) {
-  const user = await requireRole("reportee");
+  const user = (await peekCurrentUser()) ?? (await requireRole("reportee"));
   const { boardId = "" } = await searchParams;
   const [currentBoard, linkedBoard] = await Promise.all([
     getBoardForReportee(user.id),

@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { peekCurrentUser, requireUser } from "@/lib/auth";
 import { getBoardForReportee, getManagerBoard } from "@/lib/db";
 
 export default async function WorkspacePage() {
-  const user = await requireUser();
+  const user = (await peekCurrentUser()) ?? (await requireUser());
 
   if (user.role === "manager") {
     const board = await getManagerBoard(user.id);

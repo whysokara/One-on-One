@@ -3,6 +3,7 @@ import {
   getBoardById,
   getBoardMembers,
   getEntriesForBoard,
+  getEntriesForEmployee,
   getManagerBoard,
   getMembership,
   getBoardForReportee,
@@ -15,6 +16,13 @@ const BOARD_ACTIVITY_WINDOW_DAYS = 30;
 
 function latestTimestamp(values: string[]) {
   return [...values].sort((a, b) => b.localeCompare(a))[0] ?? "";
+}
+
+function updateLatest(current: string, candidate: string) {
+  if (!current || candidate.localeCompare(current) > 0) {
+    return candidate;
+  }
+  return current;
 }
 
 function isRecentTimestamp(value: string, now: Date, windowDays: number) {
@@ -56,45 +64,62 @@ export async function getManagerDashboard(managerId: string) {
     getAnnouncementsForBoard(board.id),
   ]);
 
-  const sortedAnnouncements = [...announcements].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const now = new Date();
+  const currentYear = now.getUTCFullYear();
+  const currentMonth = now.getUTCMonth();
+  const entryCounts = new Map<string, number>();
+  const latestByMember = new Map<string, string>();
+  let entriesThisMonth = 0;
+  let totalSharedEntries = 0;
+  let managerNotesCount = 0;
+  let latestActivityAt = board.updatedAt;
 
-  const entriesThisMonth = entries.filter((entry) => {
+  for (const entry of entries) {
+    latestActivityAt = updateLatest(latestActivityAt, entry.updatedAt);
+
+    if (entry.visibility === "shared") {
+      totalSharedEntries += 1;
+      entryCounts.set(entry.employeeId, (entryCounts.get(entry.employeeId) ?? 0) + 1);
+      const currentLatest = latestByMember.get(entry.employeeId);
+      if (!currentLatest || entry.updatedAt.localeCompare(currentLatest) > 0) {
+        latestByMember.set(entry.employeeId, entry.updatedAt);
+      }
+    } else {
+      managerNotesCount += 1;
+    }
+
     const date = new Date(entry.entryDate);
-    const now = new Date();
-    return date.getUTCFullYear() === now.getUTCFullYear() && date.getUTCMonth() === now.getUTCMonth();
-  }).length;
+    if (date.getUTCFullYear() === currentYear && date.getUTCMonth() === currentMonth && entry.visibility === "shared") {
+      entriesThisMonth += 1;
+    }
+  }
 
-  const memberCards = members.map((member) => {
-    const personEntries = entries.filter((entry) => entry.employeeId === member.id && entry.visibility === "shared");
-    const lastUpdated =
-      personEntries
-        .map((entry) => entry.updatedAt)
-        .sort((a, b) => b.localeCompare(a))[0] ?? member.updatedAt;
-    return {
-      ...member,
-      entryCount: personEntries.length,
-      lastUpdated,
-    };
-  });
+  for (const announcement of announcements) {
+    latestActivityAt = updateLatest(latestActivityAt, announcement.updatedAt);
+  }
 
-  memberCards.sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated));
+  const memberCards = members
+    .map((member) => {
+      const lastUpdated = latestByMember.get(member.id) ?? member.updatedAt;
+      return {
+        ...member,
+        entryCount: entryCounts.get(member.id) ?? 0,
+        lastUpdated,
+      };
+    })
+    .sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated));
 
   return {
     board,
     members: memberCards,
     entries,
-    announcements: sortedAnnouncements,
+    announcements,
     summary: {
       totalReportees: members.length,
-      totalEntries: entries.filter((entry) => entry.visibility === "shared").length,
+      totalEntries: totalSharedEntries,
       entriesThisMonth,
-      managerNotesCount: entries.filter((entry) => entry.visibility === "manager_private").length,
-      latestActivityAt: summarizeBoardHealth({
-        boardUpdatedAt: board.updatedAt,
-        members: memberCards,
-        entries,
-        announcements: sortedAnnouncements,
-      }).latestActivityAt,
+      managerNotesCount,
+      latestActivityAt,
     },
   };
 }
@@ -104,25 +129,30 @@ export async function getManagerEmployeeView(input: {
   boardId: string;
   employeeId: string;
 }) {
-  const [board, employee, members, allEntries] = await Promise.all([
+  const [board, employee, membership, allEntries] = await Promise.all([
     getBoardById(input.boardId),
     getUserById(input.employeeId),
-    getBoardMembers(input.boardId),
-    getEntriesForBoard(input.boardId),
+    getMembership(input.boardId, input.employeeId),
+    getEntriesForEmployee(input.employeeId),
   ]);
 
   if (!board || board.managerId !== input.managerId || !employee) {
     return null;
   }
 
-  const isMember = members.some((member) => member.id === employee.id);
-  if (!isMember) {
+  if (!membership) {
     return null;
   }
 
   const entries = allEntries
+    .filter((entry) => entry.boardId === board.id)
     .filter((entry) => entry.employeeId === employee.id)
     .sort((a, b) => b.entryDate.localeCompare(a.entryDate) || b.createdAt.localeCompare(a.createdAt));
+
+  let latestActivityAt = board.updatedAt;
+  for (const entry of entries) {
+    latestActivityAt = updateLatest(latestActivityAt, entry.updatedAt);
+  }
 
   return {
     board,
@@ -131,7 +161,7 @@ export async function getManagerEmployeeView(input: {
     summary: {
       sharedEntriesCount: entries.filter((entry) => entry.visibility === "shared").length,
       privateNotesCount: entries.filter((entry) => entry.visibility === "manager_private").length,
-      latestActivityAt: latestTimestamp(entries.map((entry) => entry.updatedAt)),
+      latestActivityAt,
     },
   };
 }
@@ -145,7 +175,7 @@ export async function getEmployeeHome(userId: string) {
   const [membership, manager, entries, announcements] = await Promise.all([
     getMembership(board.id, userId),
     getUserById(board.managerId),
-    getEntriesForBoard(board.id),
+    getEntriesForEmployee(userId),
     getAnnouncementsForBoard(board.id),
   ]);
 
@@ -154,8 +184,16 @@ export async function getEmployeeHome(userId: string) {
   }
 
   const ownEntries = entries
-    .filter((entry) => entry.employeeId === userId && entry.visibility === "shared")
+    .filter((entry) => entry.boardId === board.id && entry.employeeId === userId && entry.visibility === "shared")
     .sort((a, b) => b.entryDate.localeCompare(a.entryDate) || b.createdAt.localeCompare(a.createdAt));
+
+  let latestActivityAt = board.updatedAt;
+  for (const entry of ownEntries) {
+    latestActivityAt = updateLatest(latestActivityAt, entry.updatedAt);
+  }
+  for (const announcement of announcements) {
+    latestActivityAt = updateLatest(latestActivityAt, announcement.updatedAt);
+  }
 
   return {
     board,
@@ -165,11 +203,7 @@ export async function getEmployeeHome(userId: string) {
     summary: {
       sharedEntriesCount: ownEntries.length,
       announcementCount: announcements.length,
-      latestActivityAt: latestTimestamp([
-        ...ownEntries.map((entry) => entry.updatedAt),
-        ...announcements.map((announcement) => announcement.updatedAt),
-        board.updatedAt,
-      ]),
+      latestActivityAt,
     },
   };
 }

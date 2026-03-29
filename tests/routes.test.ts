@@ -53,3 +53,17 @@ test("shared shell stays mobile-friendly and does not show enterprise branding",
   assert.match(css, /min-h-dvh/);
   assert.doesNotMatch(css, /h-screen/);
 });
+
+test("public routes use the fast session peek instead of full auth verification", () => {
+  const home = readFileSync(routeFile("app/page.tsx"), "utf8");
+  const login = readFileSync(routeFile("app/login/page.tsx"), "utf8");
+  const signup = readFileSync(routeFile("app/signup/page.tsx"), "utf8");
+  const join = readFileSync(routeFile("app/join/page.tsx"), "utf8");
+  const workspace = readFileSync(routeFile("app/workspace/page.tsx"), "utf8");
+
+  assert.match(home, /peekCurrentUser/);
+  assert.match(login, /peekCurrentUser/);
+  assert.match(signup, /peekCurrentUser/);
+  assert.match(join, /peekCurrentUser/);
+  assert.match(workspace, /peekCurrentUser/);
+});

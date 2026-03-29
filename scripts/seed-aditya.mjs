@@ -32,6 +32,15 @@ function loadEnv(filePath) {
 
 loadEnv(path.join(root, ".env.local"));
 
+if (
+  process.env.ONEONONE_ALLOW_LIVE_SEED !== "yes" &&
+  !process.argv.includes("--confirm-live-seed")
+) {
+  throw new Error(
+    "Refusing to run the live seed script without confirmation. Pass --confirm-live-seed or set ONEONONE_ALLOW_LIVE_SEED=yes.",
+  );
+}
+
 const boardId = "10817604-46c4-4356-a560-0a85818921fe";
 const email = "aditya.ojha@example.com";
 const fullName = "Aditya Ojha";

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { AppFrame } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { peekCurrentUser } from "@/lib/auth";
 
 export default async function HomePage() {
-  const user = await getCurrentUser();
+  const user = await peekCurrentUser();
   const primaryHref = user ? "/workspace" : "/signup";
   const secondaryHref = user ? "/workspace" : "/login";
   const primaryLabel = user ? "Open workspace" : "Get started";

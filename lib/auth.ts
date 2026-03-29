@@ -1,7 +1,7 @@
 "use server";
 
 import { AuthFlowType, InitiateAuthCommand, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
-import { jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
+import { decodeJwt, jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCognitoClient, hasAwsConfig } from "@/lib/aws-clients";
@@ -151,6 +151,42 @@ export async function getCurrentUser(): Promise<User | null> {
       email,
       role,
     });
+  } catch {
+    return null;
+  }
+}
+
+export async function peekCurrentUser(): Promise<User | null> {
+  const rawCookie = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!rawCookie) {
+    return null;
+  }
+
+  const tokens = decodeTokens(rawCookie);
+  if (!tokens || tokens.expiresAt <= Date.now()) {
+    return null;
+  }
+
+  try {
+    const payload = decodeJwt(tokens.idToken);
+    const userId = extractString(payload, "sub");
+    const role = extractRole(payload);
+    const fullName = extractString(payload, "name");
+    const email = extractString(payload, "email");
+
+    if (!userId || !role || !fullName || !email) {
+      return null;
+    }
+
+    return {
+      id: userId,
+      cognitoSub: userId,
+      fullName,
+      email,
+      role,
+      createdAt: "",
+      updatedAt: "",
+    };
   } catch {
     return null;
   }
