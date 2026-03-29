@@ -29,9 +29,6 @@ export function AddSharedEntryForm({
   return (
     <ActionForm action={createSharedEntryAction} submitLabel="Save entry" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
-      <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-        Write one concrete moment per entry. Good examples: resolved a blocker, shipped a meaningful outcome, learned something important, or received notable appreciation.
-      </div>
       <Field
         label="What happened"
         name="title"
@@ -129,9 +126,6 @@ export function AddPrivateNoteForm({
     <ActionForm action={createPrivateNoteAction} submitLabel="Save note" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
       <input type="hidden" name="employeeId" value={employeeId} />
-      <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-        Use this for coaching context, pattern recognition, or manager observations that should stay private.
-      </div>
       <Field
         label="Private note title"
         name="title"
@@ -159,9 +153,6 @@ export function AddAnnouncementForm({ boardId }: { boardId: string }) {
   return (
     <ActionForm action={createAnnouncementAction} submitLabel="Publish" resetOnSuccess refreshOnSuccess>
       <input type="hidden" name="boardId" value={boardId} />
-      <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-        Best for short prompts, reminders, deadlines, or rollout notes that every reportee on the board should see.
-      </div>
       <Field
         label="Title"
         name="title"
@@ -187,16 +178,25 @@ export function RemoveBoardMemberForm({
   boardId,
   employeeId,
   redirectToBoard = false,
+  iconOnly = false,
 }: {
   boardId: string;
   employeeId: string;
   redirectToBoard?: boolean;
+  iconOnly?: boolean;
 }) {
   return (
     <ActionForm
       action={removeBoardMemberAction}
-      submitLabel="Remove from board"
-      submitVariant="destructive"
+      submitLabel="Remove"
+      submitContent={iconOnly ? <TrashIcon /> : undefined}
+      submitAriaLabel={iconOnly ? "Remove employee from board" : "Remove"}
+      submitVariant={iconOnly ? "primary" : "destructive"}
+      submitClassName={
+        iconOnly
+          ? "!w-9 !h-9 rounded-full border-0 bg-transparent p-0 leading-none text-slate-400 shadow-none hover:bg-slate-100 hover:text-rose-600"
+          : "!w-auto !h-8 !inline-flex !items-center !justify-center !px-3 !text-xs !leading-none"
+      }
       refreshOnSuccess={!redirectToBoard}
       onSubmit={(event) => {
         if (!window.confirm("Remove this person from the board and clear their board-specific history?")) {
@@ -208,6 +208,21 @@ export function RemoveBoardMemberForm({
       <input type="hidden" name="employeeId" value={employeeId} />
       <input type="hidden" name="redirectToBoard" value={redirectToBoard ? "1" : "0"} />
     </ActionForm>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M6.5 7h7m-6.5 0 .4 6.25A1.75 1.75 0 0 0 9.64 15h.72a1.75 1.75 0 0 0 1.74-1.75L12.5 7m-5.5 0V5.75A.75.75 0 0 1 7.75 5h4.5a.75.75 0 0 1 .75.75V7m-5.5 0h3.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M8.25 9.5v3.25M11.75 9.5v3.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
   );
 }
 

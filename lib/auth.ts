@@ -117,13 +117,11 @@ export async function getCurrentUser(): Promise<User | null> {
 
   let tokens = decodeTokens(rawCookie);
   if (!tokens) {
-    await clearSession();
     return null;
   }
 
   try {
     if (tokens.expiresAt <= Date.now()) {
-      await clearSession();
       return null;
     }
 
@@ -142,7 +140,6 @@ export async function getCurrentUser(): Promise<User | null> {
     const fullName = extractString(payload, "name");
     const email = extractString(payload, "email");
     if (!role || !fullName || !email) {
-      await clearSession();
       return null;
     }
 
@@ -153,7 +150,6 @@ export async function getCurrentUser(): Promise<User | null> {
       role,
     });
   } catch {
-    await clearSession();
     return null;
   }
 }

@@ -21,28 +21,28 @@ export default async function SignupPage() {
             title="Create one account. The role decides the workspace."
             description="Managers create and run the board. Reportees create their account first, then join the correct board with a code or link."
             aside={
-              <>
-                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Manager role</div>
+              <div className="grid w-full gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700">Manager role</div>
                   Create the board, invite the team, read shared timelines, publish announcements, and write private notes.
                 </div>
-                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Reportee role</div>
+                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Reportee role</div>
                   Maintain your own timeline of achievements, blockers, learning, and progress for your manager to review later.
                 </div>
-              </>
+              </div>
             }
           />
 
-          <SectionCard title="Before you create the account" description="A few choices matter up front.">
+          <SectionCard title="Before you create the account">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 Use your work email so the account remains easy to identify and recover.
               </div>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 Choose Manager only if you own the board and invite others into it.
               </div>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 Reportees can create the account now and join the board as soon as the invite arrives.
               </div>
             </div>
@@ -51,9 +51,9 @@ export default async function SignupPage() {
 
         <FormShell title="Create account" description="You can sign up now and immediately log back in with the same credentials.">
           <SignupForm />
-          <p className="mt-4 text-sm text-[color:var(--muted)]">
+          <p className="mt-4 text-sm text-slate-500">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-[color:var(--hero)]">
+            <Link href="/login" className="font-bold text-blue-700 hover:text-blue-800">
               Log in
             </Link>
           </p>

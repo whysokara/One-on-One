@@ -37,12 +37,12 @@ export default async function JoinPage({
             }
             aside={
               <>
-                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">After joining</div>
+                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700">After joining</div>
                   You land in your timeline and can start adding work moments right away.
                 </div>
-                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">One board at a time</div>
+                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">One board at a time</div>
                   This MVP keeps one active board per reportee so the workspace stays unambiguous.
                 </div>
               </>
@@ -53,7 +53,7 @@ export default async function JoinPage({
             <ActionForm action={joinBoardAction} submitLabel="Join board">
               <input type="hidden" name="boardId" value={linkedBoard ? boardId : ""} />
               {boardId && !linkedBoard ? (
-                <div className="rounded-xl border border-[color:var(--accent)]/22 bg-[color:var(--accent-soft)] px-4 py-3 text-sm leading-6 text-[color:var(--accent)]">
+                <div className="rounded-2xl border border-[color:var(--accent)]/16 bg-[color:var(--accent-soft)] px-4 py-3 text-sm leading-6 text-[color:var(--accent)]">
                   This join link is invalid. Ask your manager for a fresh link or enter a valid invite code below.
                 </div>
               ) : null}
@@ -63,7 +63,7 @@ export default async function JoinPage({
           </FormShell>
         </div>
 
-        <SectionCard title="Need help?" description="If the join step feels blocked, it is usually one of these.">
+        <SectionCard title="Need help?">
           <div className="space-y-3 text-sm leading-6 text-[color:var(--muted)]">
             <p>Ask your manager for a fresh six-character invite code if the original one was typed incorrectly.</p>
             <p>If you opened a direct join link, the board is preselected unless that link is malformed or expired.</p>
