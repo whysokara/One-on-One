@@ -19,3 +19,9 @@ test("buildInviteLink falls back to the configured base url when host headers ar
     "https://example.com/join?boardId=board-2",
   );
 });
+
+test("buildInviteLink rejects missing host and fallback url", () => {
+  const headers = new Headers();
+
+  assert.throws(() => buildInviteLink("board-3", headers, ""), /Cannot build an invite link/);
+});

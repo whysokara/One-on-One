@@ -41,11 +41,19 @@ if (
   );
 }
 
-const boardId = "10817604-46c4-4356-a560-0a85818921fe";
-const email = "aditya.ojha@example.com";
-const fullName = "Aditya Ojha";
-const password = "Aditya2026A";
-const today = "2026-03-29";
+function requireValue(name, fallback) {
+  const value = process.env[name] ?? fallback;
+  if (!value) {
+    throw new Error(`Missing ${name}. Set it in .env.local or pass it in the environment.`);
+  }
+  return value;
+}
+
+const boardId = requireValue("SEED_BOARD_ID");
+const email = requireValue("SEED_EMAIL");
+const fullName = requireValue("SEED_FULL_NAME");
+const password = requireValue("SEED_PASSWORD");
+const today = requireValue("SEED_ENTRY_DATE", new Date().toISOString().slice(0, 10));
 const now = new Date().toISOString();
 
 const requiredEnv = [

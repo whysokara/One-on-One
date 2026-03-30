@@ -12,6 +12,7 @@ function routeFile(...segments: string[]) {
 test("core app routes exist", () => {
   const files = [
     "app/page.tsx",
+    "app/health/route.ts",
     "app/employee/page.tsx",
     "app/join/page.tsx",
     "app/login/page.tsx",
@@ -38,6 +39,11 @@ test("next config allows the local dev origin", () => {
   assert.match(contents, /allowedDevOrigins/);
   assert.match(contents, /192\.168\.1\.3:3000/);
   assert.match(contents, /192\.168\.1\.9:3000/);
+});
+
+test("package json pins the node runtime major version", () => {
+  const contents = readFileSync(routeFile("package.json"), "utf8");
+  assert.match(contents, /"engines":\s*{\s*"node":\s*"20\.x"\s*}/s);
 });
 
 test("amplify build ignores the next lockfile patch step", () => {

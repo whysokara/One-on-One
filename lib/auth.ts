@@ -152,7 +152,8 @@ export async function getCurrentUser(): Promise<User | null> {
       role,
     });
   } catch {
-    return null;
+    console.error("[auth] Failed to verify the current session.");
+    throw new Error("Unable to verify the current session.");
   }
 }
 
@@ -193,11 +194,15 @@ export async function peekCurrentUser(): Promise<User | null> {
 }
 
 export async function requireUser() {
-  const user = await getCurrentUser();
-  if (!user) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      redirect("/login");
+    }
+    return user;
+  } catch {
     redirect("/login");
   }
-  return user;
 }
 
 export async function requireRole(role: UserRole) {

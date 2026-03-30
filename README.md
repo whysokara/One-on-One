@@ -1,15 +1,15 @@
 # One-on-One
 
-One-on-One is a lightweight performance memory app for managers and reportees. It helps teams log achievements, blockers, learning, certifications, and manager observations throughout the year so reviews are based on evidence instead of memory.
+One-on-One is a lightweight performance memory app for managers and reportees. It is designed for year-round review context, not for task tracking, chat, or HR workflows.
 
 ## What It Does
 
-- Managers create a team board
+- Managers create a board for a review cycle
 - Reportees join with an invite code or link
-- Reportees log work moments to their own timeline
+- Reportees add shared timeline entries as work happens
 - Managers review each employee timeline in one place
-- Managers add private notes visible only to themselves
-- Teams post lightweight announcements
+- Managers leave private notes only they can see
+- Teams post short board announcements
 
 ## Current Stack
 
@@ -19,21 +19,21 @@ One-on-One is a lightweight performance memory app for managers and reportees. I
 - AWS Cognito for auth
 - DynamoDB for app data
 - AWS CDK for infrastructure
-- Amplify-ready build setup
+- Amplify for web hosting
 
-## AWS Resources
+## Main Routes
 
-The current app is wired for:
-
-- Cognito User Pool
-- DynamoDB tables for:
-  - users
-  - boards
-  - memberships
-  - entries
-  - announcements
-
-Infrastructure lives in [infra](./infra).
+- `/` landing page
+- `/workspace` role-aware entry route
+- `/login`
+- `/signup`
+- `/join`
+- `/employee`
+- `/manager`
+- `/manager/create-board`
+- `/manager/board/[boardId]`
+- `/manager/board/[boardId]/employee/[employeeId]`
+- `/health`
 
 ## Local Development
 
@@ -43,25 +43,56 @@ Install dependencies:
 npm install
 ```
 
-Create local env config from `.env.example` or use `.env.local` with your deployed AWS values.
+Create `.env.local` from `.env.example` and fill in your AWS values.
 
 Run the app:
 
 ```bash
-npm run dev -- --hostname 127.0.0.1 --port 3000
+npm run dev
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:3000
+http://localhost:3000
 ```
+
+If you need LAN access, the dev server binds to `0.0.0.0` by default.
+
+## Environment Variables
+
+Required AWS values:
+
+- `AWS_REGION`
+- `COGNITO_USER_POOL_ID`
+- `COGNITO_USER_POOL_CLIENT_ID`
+- `DDB_USERS_TABLE`
+- `DDB_BOARDS_TABLE`
+- `DDB_MEMBERSHIPS_TABLE`
+- `DDB_ENTRIES_TABLE`
+- `DDB_ANNOUNCEMENTS_TABLE`
+
+Optional values:
+
+- `APP_BASE_URL` for invite links when request host headers are unavailable
+- `NEXT_IGNORE_INCORRECT_LOCKFILE=true` for the current Amplify build path
+
+Seed-script values are separate and should stay private:
+
+- `SEED_BOARD_ID`
+- `SEED_EMAIL`
+- `SEED_FULL_NAME`
+- `SEED_PASSWORD`
+- `SEED_ENTRY_DATE`
 
 ## Useful Scripts
 
 ```bash
 npm run dev
 npm run build
+npm run start
+npm run lint
+npm test
 npm run infra:synth
 npm run infra:deploy
 ```
@@ -75,18 +106,30 @@ See [AWS_SETUP.md](./AWS_SETUP.md) for:
 - environment variable mapping
 - Amplify setup
 
-## Test Accounts
+## Testing
 
-Current test users created in Cognito:
+The repo includes:
 
-- Manager: `manager.test@oneonone.app`
-- Reportee: `reportee.test@oneonone.app`
-- Password: `Oneonone1234`
+- route and config checks
+- validation tests
+- rate-limit tests
+- health-route checks
+- build verification through Next.js
 
-Current test board:
+Run the suite:
 
-- Board name: `QA Board FY26`
-- Invite code: `00BHBY`
+```bash
+npm test
+```
+
+## Seed Script
+
+`scripts/seed-aditya.mjs` is a live AWS seed helper. It requires:
+
+- explicit confirmation with `--confirm-live-seed` or `ONEONONE_ALLOW_LIVE_SEED=yes`
+- the seed env vars listed above
+
+It is intentionally not safe to run without those inputs.
 
 ## Repo Structure
 
@@ -95,11 +138,19 @@ app/          Next.js routes and pages
 components/   Shared UI and forms
 lib/          Auth, data, actions, queries, config
 infra/        AWS CDK stack
+scripts/      One-off maintenance and seed helpers
+tests/        Node test suite
+kara/         Personal skills and agent notes
 ```
 
 ## Product Direction
 
-This is intentionally not an HRMS, task tracker, or chat product. It is a focused internal tool for year-round performance memory.
+The app is intentionally narrow. It is not a general HRMS, task manager, or chat product. The core loop is:
+
+1. capture work moments while they are fresh
+2. review the timeline later
+3. keep manager-only context separate
+4. keep the board simple enough that people actually use it
 
 ## Author
 

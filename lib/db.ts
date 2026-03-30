@@ -65,12 +65,11 @@ async function batchGetUsers(userIds: string[]) {
   const client = getDocumentClient();
   const config = requireAwsConfig();
   const users: User[] = [];
+  let remainingIds = [...new Set(userIds)];
 
-  for (let index = 0; index < userIds.length; index += BATCH_GET_SIZE) {
-    const keys = userIds.slice(index, index + BATCH_GET_SIZE).map((id) => ({ id }));
-    if (!keys.length) {
-      continue;
-    }
+  for (let attempts = 0; remainingIds.length && attempts < 10; attempts += 1) {
+    const keys = remainingIds.slice(0, BATCH_GET_SIZE).map((id) => ({ id }));
+    remainingIds = remainingIds.slice(BATCH_GET_SIZE);
 
     const batch = await client.send(
       new BatchGetCommand({
@@ -81,6 +80,18 @@ async function batchGetUsers(userIds: string[]) {
     );
 
     users.push(...((batch.Responses?.[config.usersTable] as User[] | undefined) ?? []));
+
+    const unprocessed = batch.UnprocessedKeys?.[config.usersTable]?.Keys ?? [];
+    if (unprocessed.length) {
+      remainingIds = [
+        ...unprocessed.map((key) => key.id as string),
+        ...remainingIds,
+      ];
+    }
+  }
+
+  if (remainingIds.length) {
+    throw new Error("Unable to load all board members right now.");
   }
 
   return users;

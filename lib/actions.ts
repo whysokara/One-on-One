@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { clearSession, logIn, requireRole, signUp } from "@/lib/auth";
@@ -20,6 +21,7 @@ import {
   updateEntry,
 } from "@/lib/db";
 import { ensureManagerOwnsBoard, ensureReporteeBelongsToBoard } from "@/lib/queries";
+import { consumeDefaultRateLimit } from "@/lib/rate-limit";
 import { EntryCategory, UserRole } from "@/lib/types";
 import {
   validateAnnouncementMessage,
@@ -73,6 +75,7 @@ const SAFE_ACTION_MESSAGE_PATTERNS = [
   /^.+ must be \d+ characters or fewer\.$/,
   /^Invite code must be 6 letters or numbers\.$/,
   /^Invalid date\.$/,
+  /^Too many requests\. Try again in a moment\.$/,
 ];
 
 function isSafeActionMessage(message: string) {
@@ -88,6 +91,17 @@ function handleActionError(action: string, error: unknown, fallbackMessage: stri
 
   console.error(`[actions] ${action} failed`, error);
   return fail(fallbackMessage);
+}
+
+async function enforceActionRateLimit(scope: string, limit: number, windowMs: number) {
+  const requestHeaders = await headers();
+  const forwardedFor = requestHeaders.get("x-forwarded-for") ?? requestHeaders.get("x-real-ip") ?? "unknown";
+  const ip = forwardedFor.split(",")[0]?.trim() || "unknown";
+  const result = consumeDefaultRateLimit(`${scope}:${ip}`, limit, windowMs);
+
+  if (!result.allowed) {
+    throw new Error("Too many requests. Try again in a moment.");
+  }
 }
 
 function readString(formData: FormData, key: string) {
@@ -116,6 +130,7 @@ function assertDate(value: string) {
 
 export async function signupAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("auth:signup", 5, 10 * 60 * 1000);
     const fullName = readRequired(formData, "fullName", "Full name");
     const email = readRequired(formData, "email", "Email");
     const password = readRequired(formData, "password", "Password");
@@ -138,6 +153,7 @@ export async function signupAction(_: FormState | undefined, formData: FormData)
 
 export async function loginAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("auth:login", 10, 10 * 60 * 1000);
     const email = readRequired(formData, "email", "Email");
     const password = readRequired(formData, "password", "Password");
     validateEmail(email);
@@ -155,6 +171,7 @@ export async function logoutAction() {
 
 export async function createBoardAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("board:create", 10, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     if (await getManagerBoard(manager.id)) {
       redirect("/manager");
@@ -172,6 +189,7 @@ export async function createBoardAction(_: FormState | undefined, formData: Form
 
 export async function joinBoardAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("board:join", 20, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const inviteCode = readString(formData, "inviteCode");
     const boardId = readString(formData, "boardId");
@@ -203,6 +221,7 @@ export async function joinBoardAction(_: FormState | undefined, formData: FormDa
 
 export async function createSharedEntryAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("entry:create-shared", 20, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const boardId = readRequired(formData, "boardId", "Board");
     const membership = await ensureReporteeBelongsToBoard(reportee.id, boardId);
@@ -237,6 +256,7 @@ export async function createSharedEntryAction(_: FormState | undefined, formData
 
 export async function updateSharedEntryAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("entry:update-shared", 30, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const entryId = readRequired(formData, "entryId", "Entry");
     const entry = await getEntryById(entryId);
@@ -268,6 +288,7 @@ export async function updateSharedEntryAction(_: FormState | undefined, formData
 
 export async function deleteSharedEntryAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("entry:delete-shared", 30, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const entryId = readRequired(formData, "entryId", "Entry");
     const entry = await getEntryById(entryId);
@@ -284,6 +305,7 @@ export async function deleteSharedEntryAction(_: FormState | undefined, formData
 
 export async function createPrivateNoteAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("note:create-private", 20, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     const boardId = readRequired(formData, "boardId", "Board");
     const employeeId = readRequired(formData, "employeeId", "Employee");
@@ -320,6 +342,7 @@ export async function createPrivateNoteAction(_: FormState | undefined, formData
 
 export async function createAnnouncementAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("announcement:create", 20, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     const boardId = readRequired(formData, "boardId", "Board");
     const board = await ensureManagerOwnsBoard(manager.id, boardId);
@@ -349,6 +372,7 @@ export async function createAnnouncementAction(_: FormState | undefined, formDat
 
 export async function removeBoardMemberAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("board:remove-member", 10, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     const boardId = readRequired(formData, "boardId", "Board");
     const employeeId = readRequired(formData, "employeeId", "Employee");
