@@ -21,9 +21,6 @@ export default async function LoginPage() {
               <h1 className="font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-[3.25rem]">
                 Open your workspace
               </h1>
-              {/* <p className="mt-5 max-w-xl text-lg font-semibold leading-8 text-slate-600/90">
-                Keep track of your achievements, certifications, awards, and other work moments.
-              </p> */}
             </div>
           </div>
         </section>

@@ -64,6 +64,7 @@ If you need LAN access, the dev server binds to `0.0.0.0` by default.
 Required AWS values:
 
 - `AWS_REGION`
+- `ONEONONE_AWS_REGION` for Amplify Hosting, because Amplify blocks custom `AWS_` env vars
 - `COGNITO_USER_POOL_ID`
 - `COGNITO_USER_POOL_CLIENT_ID`
 - `DDB_USERS_TABLE`

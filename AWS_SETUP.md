@@ -17,7 +17,8 @@
 4. Deploy infrastructure:
    - `npm run infra:deploy`
 5. Copy the CloudFormation/CDK outputs into your app environment:
-   - `AWS_REGION`
+   - `AWS_REGION` for local development
+   - `ONEONONE_AWS_REGION` for Amplify Hosting
    - `COGNITO_USER_POOL_ID`
    - `COGNITO_USER_POOL_CLIENT_ID`
    - `DDB_USERS_TABLE`
@@ -42,4 +43,5 @@
 - Signup uses Cognito's email verification link. Users click the link to finish creating the account.
 - The app expects Cognito custom attribute `custom:role`.
 - The app uses AWS runtime credentials; local development needs valid AWS credentials in your shell.
+- Amplify blocks custom environment variables that start with `AWS`, so use `ONEONONE_AWS_REGION` there.
 - `APP_BASE_URL` is only a fallback for invite links and signup links when the request host is unavailable.

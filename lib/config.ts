@@ -1,4 +1,5 @@
 type OptionalEnvKey =
+  | "ONEONONE_AWS_REGION"
   | "AWS_REGION"
   | "COGNITO_USER_POOL_ID"
   | "COGNITO_USER_POOL_CLIENT_ID"
@@ -25,7 +26,7 @@ function readOptional(key: OptionalEnvKey) {
 }
 
 export function getAwsConfig(): AwsAppConfig | null {
-  const awsRegion = readOptional("AWS_REGION");
+  const awsRegion = readOptional("ONEONONE_AWS_REGION") ?? readOptional("AWS_REGION");
   const cognitoUserPoolId = readOptional("COGNITO_USER_POOL_ID");
   const cognitoUserPoolClientId = readOptional("COGNITO_USER_POOL_CLIENT_ID");
   const usersTable = readOptional("DDB_USERS_TABLE");
