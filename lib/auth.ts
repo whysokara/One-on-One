@@ -1,6 +1,11 @@
 "use server";
 
-import { AuthFlowType, InitiateAuthCommand, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import {
+  AuthFlowType,
+  InitiateAuthCommand,
+  ResendConfirmationCodeCommand,
+  SignUpCommand,
+} from "@aws-sdk/client-cognito-identity-provider";
 import { decodeJwt, jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -218,7 +223,7 @@ export async function signUp(input: {
   email: string;
   password: string;
   role: UserRole;
-}) {
+}): Promise<{ fullName: string; email: string; role: UserRole; resentConfirmation: boolean }> {
   const config = requireAwsConfig();
   const client = getCognitoClient();
   const email = normalizeEmail(input.email);
@@ -237,22 +242,35 @@ export async function signUp(input: {
       }),
     );
   } catch (error) {
-    throw new Error(mapAuthError(error));
+    if (!(error instanceof Error) || error.name !== "UsernameExistsException") {
+      throw new Error(mapAuthError(error));
+    }
+
+    try {
+      await client.send(
+        new ResendConfirmationCodeCommand({
+          ClientId: config.cognitoUserPoolClientId,
+          Username: email,
+        }),
+      );
+    } catch (resendError) {
+      throw new Error(mapAuthError(resendError));
+    }
+
+    return {
+      fullName: input.fullName.trim(),
+      email,
+      role: input.role,
+      resentConfirmation: true,
+    };
   }
 
-  const user = await logIn({
-    email,
-    password: input.password,
-  });
-
-  await ensureUserProfile({
-    id: user.id,
-    fullName: input.fullName,
+  return {
+    fullName: input.fullName.trim(),
     email,
     role: input.role,
-  });
-
-  return user;
+    resentConfirmation: false,
+  };
 }
 
 export async function logIn(input: { email: string; password: string }) {

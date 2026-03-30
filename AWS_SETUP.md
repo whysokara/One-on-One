@@ -39,7 +39,7 @@
 
 ## Important notes
 - Cognito is configured for self-signup.
-- Email verification is optional in this stack.
+- Signup uses Cognito's email verification link. Users click the link to finish creating the account.
 - The app expects Cognito custom attribute `custom:role`.
 - The app uses AWS runtime credentials; local development needs valid AWS credentials in your shell.
-- Invite links are built from the incoming request host, so `APP_BASE_URL` is no longer required.
+- `APP_BASE_URL` is only a fallback for invite links and signup links when the request host is unavailable.

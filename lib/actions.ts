@@ -144,8 +144,8 @@ export async function signupAction(_: FormState | undefined, formData: FormData)
       return fail("Invalid role.");
     }
 
-    const user = await signUp({ fullName, email, password, role });
-    redirect(user.role === "manager" ? "/manager" : "/employee");
+    await signUp({ fullName, email, password, role });
+    return succeed("Check your email. Open the link there to finish creating your account.");
   } catch (error) {
     return handleActionError("signupAction", error, "Unable to sign up.");
   }

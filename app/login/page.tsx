@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth-forms";
-import { FormShell } from "@/components/forms";
-import { AppFrame, PageHeader, SectionCard } from "@/components/ui";
+import { AppFrame } from "@/components/ui";
 import { peekCurrentUser } from "@/lib/auth";
 
 export default async function LoginPage() {
@@ -14,52 +13,41 @@ export default async function LoginPage() {
 
   return (
     <AppFrame user={user}>
-      <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[minmax(0,1.04fr)_24rem]">
-        <div className="space-y-5">
-          <PageHeader
-            eyebrow="Log In"
-            title="Return to the working record."
-            aside={
-              <div className="grid w-full gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700">Managers</div>
-                  Open the board, review reportees, publish announcements, and keep private notes with the right person.
-                </div>
-                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Reportees</div>
-                  Resume your timeline, add a new work moment, or review what already exists before the next one-on-one.
-                </div>
-              </div>
-            }
-          />
-
-          <SectionCard title="What happens next">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                Managers land in the live board dashboard.
-              </div>
-              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                Reportees land in their own timeline.
-              </div>
-              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                Valid sessions skip auth screens automatically.
-              </div>
+      <div className="mx-auto grid w-full max-w-7xl flex-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_27rem]">
+        <section className="relative overflow-hidden lg:min-h-[32rem]">
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(0,91,187,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(0,145,218,0.05),transparent_28%)]" />
+          <div className="flex h-full flex-col justify-center p-6 md:p-8 xl:p-10">
+            <div className="max-w-2xl">
+              <h1 className="font-display text-4xl font-extrabold tracking-tight text-slate-900 md:text-[3.25rem]">
+                Open your workspace
+              </h1>
+              {/* <p className="mt-5 max-w-xl text-lg font-semibold leading-8 text-slate-600/90">
+                Keep track of your achievements, certifications, awards, and other work moments.
+              </p> */}
             </div>
-          </SectionCard>
-        </div>
-
-        <FormShell title="Log in">
-          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
-            This is a real Cognito-backed login. New accounts can sign up and come back later with the same credentials.
           </div>
-          <LoginForm />
-          <p className="mt-4 text-sm text-slate-500">
-            Need an account?{" "}
-            <Link href="/signup" className="font-bold text-blue-700 hover:text-blue-800">
-              Create one
-            </Link>
-          </p>
-        </FormShell>
+        </section>
+
+        <section className="overflow-hidden rounded-xl bg-gradient-to-br from-white via-white to-sky-50/70 p-[1px] shadow-[0_8px_28px_rgba(15,23,42,0.08)] ring-1 ring-inset ring-sky-100/70 xl:self-center">
+          <div className="panel w-full overflow-hidden bg-white">
+            <div className="h-1 bg-gradient-to-r from-[color:var(--hero)] via-sky-400 to-[color:var(--accent)]" />
+            <div className="p-6 md:p-7">
+              <div className="mb-4">
+                <div className="inline-flex bg-blue-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-blue-700 ring-1 ring-inset ring-blue-100">
+                  Continue
+                </div>
+              </div>
+              <LoginForm />
+
+              <p className="mt-4 text-sm text-slate-500">
+                Need an account?{" "}
+                <Link href="/signup" className="font-bold text-blue-700 hover:text-blue-800">
+                  Create one
+                </Link>
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
     </AppFrame>
   );

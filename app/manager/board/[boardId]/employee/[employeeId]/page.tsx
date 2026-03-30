@@ -32,7 +32,7 @@ export default async function ManagerEmployeePage({
           <span>{payload.employee.fullName}</span>
         </div>
 
-        <div className="flex items-start justify-between gap-4 rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] px-5 py-5">
+        <div className="flex items-start justify-between gap-4 rounded-[1.25rem] bg-gradient-to-r from-white via-white to-slate-50/80 px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-inset ring-slate-200/70">
           <div className="min-w-0">
             <h1 className="font-display text-3xl font-extrabold tracking-tight text-[color:var(--ink)] md:text-4xl">
               {payload.employee.fullName}

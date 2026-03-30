@@ -74,11 +74,11 @@
   }
 
   .panel {
-    @apply rounded-xl border border-slate-100 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:border-slate-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)];
+    @apply rounded-xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-inset ring-slate-100 transition-all hover:ring-slate-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)];
   }
 
   .panel-header {
-    @apply flex shrink-0 flex-col items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5;
+    @apply flex shrink-0 flex-col items-start justify-between gap-3 border-b border-slate-100/70 bg-slate-50/70 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5;
   }
 
   .panel-body {
@@ -110,11 +110,43 @@
   }
 
   .summary-card {
-    @apply flex items-center justify-between rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)];
+    @apply flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-inset ring-slate-100 transition hover:ring-slate-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)];
   }
 
   .empty-state {
     @apply flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white/80 p-8 text-center transition hover:border-blue-200 hover:bg-white;
+  }
+
+  .auth-note {
+    @apply rounded-2xl bg-gradient-to-br from-white via-white to-sky-50/70 p-5 md:p-6 ring-1 ring-inset ring-slate-100;
+  }
+
+  .auth-note-kicker {
+    @apply text-[10px] font-bold uppercase tracking-[0.2em] text-blue-700;
+  }
+
+  .auth-note-title {
+    @apply mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900;
+  }
+
+  .auth-note-copy {
+    @apply mt-2 max-w-lg text-sm leading-6 text-slate-500;
+  }
+
+  .auth-note-list {
+    @apply mt-5 grid gap-3 sm:grid-cols-2;
+  }
+
+  .auth-note-item {
+    @apply rounded-xl px-4 py-4 text-sm leading-6 ring-1 ring-inset;
+  }
+
+  .auth-note-item-manager {
+    @apply bg-blue-50 text-blue-900 ring-blue-100;
+  }
+
+  .auth-note-item-reportee {
+    @apply bg-emerald-50 text-emerald-900 ring-emerald-100;
   }
 }
 

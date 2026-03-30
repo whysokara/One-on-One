@@ -115,7 +115,14 @@ export class OneononeStack extends cdk.Stack {
           mutable: true,
         }),
       },
-      autoVerify: {},
+      userVerification: {
+        emailStyle: cognito.VerificationEmailStyle.LINK,
+        emailSubject: "Verify your One-on-One account",
+        emailBody: "Verify your account by clicking on {##Verify Email##}",
+      },
+      autoVerify: {
+        email: true,
+      },
       passwordPolicy: {
         minLength: 10,
         requireDigits: true,
@@ -125,6 +132,12 @@ export class OneononeStack extends cdk.Stack {
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    userPool.addDomain("UserPoolDomain", {
+      cognitoDomain: {
+        domainPrefix: "oneonone-auth-ap-south-1",
+      },
     });
 
     const userPoolClient = userPool.addClient("WebClient", {

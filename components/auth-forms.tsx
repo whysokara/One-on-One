@@ -6,7 +6,7 @@ import { VALIDATION_LIMITS } from "@/lib/validation";
 
 export function SignupForm() {
   return (
-    <ActionForm action={signupAction} submitLabel="Create account">
+    <ActionForm action={signupAction} submitLabel="Create account" resetOnSuccess>
       <Field
         label="Full name"
         name="fullName"
