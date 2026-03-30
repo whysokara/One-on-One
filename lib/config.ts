@@ -1,16 +1,12 @@
-const OPTIONAL_ENV_KEYS = [
-  "AWS_REGION",
-  "COGNITO_USER_POOL_ID",
-  "COGNITO_USER_POOL_CLIENT_ID",
-  "DDB_USERS_TABLE",
-  "DDB_BOARDS_TABLE",
-  "DDB_MEMBERSHIPS_TABLE",
-  "DDB_ENTRIES_TABLE",
-  "DDB_ANNOUNCEMENTS_TABLE",
-  "APP_BASE_URL",
-] as const;
-
-type OptionalEnvKey = (typeof OPTIONAL_ENV_KEYS)[number];
+type OptionalEnvKey =
+  | "AWS_REGION"
+  | "COGNITO_USER_POOL_ID"
+  | "COGNITO_USER_POOL_CLIENT_ID"
+  | "DDB_USERS_TABLE"
+  | "DDB_BOARDS_TABLE"
+  | "DDB_MEMBERSHIPS_TABLE"
+  | "DDB_ENTRIES_TABLE"
+  | "DDB_ANNOUNCEMENTS_TABLE";
 
 export type AwsAppConfig = {
   awsRegion: string;
@@ -21,7 +17,6 @@ export type AwsAppConfig = {
   membershipsTable: string;
   entriesTable: string;
   announcementsTable: string;
-  appBaseUrl: string;
 };
 
 function readOptional(key: OptionalEnvKey) {
@@ -38,8 +33,6 @@ export function getAwsConfig(): AwsAppConfig | null {
   const membershipsTable = readOptional("DDB_MEMBERSHIPS_TABLE");
   const entriesTable = readOptional("DDB_ENTRIES_TABLE");
   const announcementsTable = readOptional("DDB_ANNOUNCEMENTS_TABLE");
-  const appBaseUrl = readOptional("APP_BASE_URL");
-
   if (
     !awsRegion ||
     !cognitoUserPoolId ||
@@ -48,8 +41,7 @@ export function getAwsConfig(): AwsAppConfig | null {
     !boardsTable ||
     !membershipsTable ||
     !entriesTable ||
-    !announcementsTable ||
-    !appBaseUrl
+    !announcementsTable
   ) {
     return null;
   }
@@ -63,7 +55,6 @@ export function getAwsConfig(): AwsAppConfig | null {
     membershipsTable,
     entriesTable,
     announcementsTable,
-    appBaseUrl,
   };
 }
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { AuthFlowType, InitiateAuthCommand, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
-import { jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
+import { decodeJwt, jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCognitoClient, hasAwsConfig } from "@/lib/aws-clients";
@@ -57,7 +57,9 @@ function tokensFromAuthResult(authResult: {
 async function verifyIdToken(idToken: string) {
   const config = requireAwsConfig();
   const issuer = getIssuer();
-  const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
+  const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`), {
+    timeoutDuration: 5000,
+  });
 
   const result = await jwtVerify(idToken, jwks, {
     issuer,
@@ -115,15 +117,13 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
 
-  let tokens = decodeTokens(rawCookie);
+  const tokens = decodeTokens(rawCookie);
   if (!tokens) {
-    await clearSession();
     return null;
   }
 
   try {
     if (tokens.expiresAt <= Date.now()) {
-      await clearSession();
       return null;
     }
 
@@ -142,7 +142,6 @@ export async function getCurrentUser(): Promise<User | null> {
     const fullName = extractString(payload, "name");
     const email = extractString(payload, "email");
     if (!role || !fullName || !email) {
-      await clearSession();
       return null;
     }
 
@@ -153,17 +152,57 @@ export async function getCurrentUser(): Promise<User | null> {
       role,
     });
   } catch {
-    await clearSession();
+    console.error("[auth] Failed to verify the current session.");
+    throw new Error("Unable to verify the current session.");
+  }
+}
+
+export async function peekCurrentUser(): Promise<User | null> {
+  const rawCookie = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!rawCookie) {
+    return null;
+  }
+
+  const tokens = decodeTokens(rawCookie);
+  if (!tokens || tokens.expiresAt <= Date.now()) {
+    return null;
+  }
+
+  try {
+    const payload = decodeJwt(tokens.idToken);
+    const userId = extractString(payload, "sub");
+    const role = extractRole(payload);
+    const fullName = extractString(payload, "name");
+    const email = extractString(payload, "email");
+
+    if (!userId || !role || !fullName || !email) {
+      return null;
+    }
+
+    return {
+      id: userId,
+      cognitoSub: userId,
+      fullName,
+      email,
+      role,
+      createdAt: "",
+      updatedAt: "",
+    };
+  } catch {
     return null;
   }
 }
 
 export async function requireUser() {
-  const user = await getCurrentUser();
-  if (!user) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      redirect("/login");
+    }
+    return user;
+  } catch {
     redirect("/login");
   }
-  return user;
 }
 
 export async function requireRole(role: UserRole) {

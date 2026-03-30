@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { clearSession, logIn, requireRole, signUp } from "@/lib/auth";
@@ -20,6 +21,7 @@ import {
   updateEntry,
 } from "@/lib/db";
 import { ensureManagerOwnsBoard, ensureReporteeBelongsToBoard } from "@/lib/queries";
+import { consumeDefaultRateLimit } from "@/lib/rate-limit";
 import { EntryCategory, UserRole } from "@/lib/types";
 import {
   validateAnnouncementMessage,
@@ -40,8 +42,6 @@ export type FormState = {
   submissionId?: number;
 };
 
-const EMPTY_STATE: FormState = {};
-
 function fail(message: string): FormState {
   return { error: message, submissionId: Date.now() };
 }
@@ -53,6 +53,54 @@ function succeed(message: string): FormState {
 function rethrowRedirectError(error: unknown) {
   if (isRedirectError(error)) {
     throw error;
+  }
+}
+
+const SAFE_ACTION_MESSAGE_PATTERNS = [
+  /^.+ is required\.$/,
+  /^Invalid role\.$/,
+  /^Invalid category\.$/,
+  /^Invalid invite code or link\.$/,
+  /^Unauthorized\.$/,
+  /^This person is no longer attached to your board\.$/,
+  /^You are already attached to ".+"\.$/,
+  /^Enter a valid work email\.$/,
+  /^Password does not meet the required complexity\.$/,
+  /^Email or password is incorrect\.$/,
+  /^An account with this email already exists\.$/,
+  /^This account is not confirmed yet\.$/,
+  /^No account was found for this email\.$/,
+  /^Password must be at least \d+ characters\.$/,
+  /^.+ must be at least \d+ characters\.$/,
+  /^.+ must be \d+ characters or fewer\.$/,
+  /^Invite code must be 6 letters or numbers\.$/,
+  /^Invalid date\.$/,
+  /^Too many requests\. Try again in a moment\.$/,
+];
+
+function isSafeActionMessage(message: string) {
+  return SAFE_ACTION_MESSAGE_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+function handleActionError(action: string, error: unknown, fallbackMessage: string): FormState {
+  rethrowRedirectError(error);
+
+  if (error instanceof Error && isSafeActionMessage(error.message)) {
+    return fail(error.message);
+  }
+
+  console.error(`[actions] ${action} failed`, error);
+  return fail(fallbackMessage);
+}
+
+async function enforceActionRateLimit(scope: string, limit: number, windowMs: number) {
+  const requestHeaders = await headers();
+  const forwardedFor = requestHeaders.get("x-forwarded-for") ?? requestHeaders.get("x-real-ip") ?? "unknown";
+  const ip = forwardedFor.split(",")[0]?.trim() || "unknown";
+  const result = consumeDefaultRateLimit(`${scope}:${ip}`, limit, windowMs);
+
+  if (!result.allowed) {
+    throw new Error("Too many requests. Try again in a moment.");
   }
 }
 
@@ -82,6 +130,7 @@ function assertDate(value: string) {
 
 export async function signupAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("auth:signup", 5, 10 * 60 * 1000);
     const fullName = readRequired(formData, "fullName", "Full name");
     const email = readRequired(formData, "email", "Email");
     const password = readRequired(formData, "password", "Password");
@@ -98,21 +147,20 @@ export async function signupAction(_: FormState | undefined, formData: FormData)
     const user = await signUp({ fullName, email, password, role });
     redirect(user.role === "manager" ? "/manager" : "/employee");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to sign up.");
+    return handleActionError("signupAction", error, "Unable to sign up.");
   }
 }
 
 export async function loginAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("auth:login", 10, 10 * 60 * 1000);
     const email = readRequired(formData, "email", "Email");
     const password = readRequired(formData, "password", "Password");
     validateEmail(email);
     const user = await logIn({ email, password });
     redirect(user.role === "manager" ? "/manager" : "/employee");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to log in.");
+    return handleActionError("loginAction", error, "Unable to log in.");
   }
 }
 
@@ -123,6 +171,7 @@ export async function logoutAction() {
 
 export async function createBoardAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("board:create", 10, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     if (await getManagerBoard(manager.id)) {
       redirect("/manager");
@@ -134,13 +183,13 @@ export async function createBoardAction(_: FormState | undefined, formData: Form
     const board = await createBoard({ managerId: manager.id, name, description });
     redirect(`/manager/board/${board.id}`);
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to create board.");
+    return handleActionError("createBoardAction", error, "Unable to create board.");
   }
 }
 
 export async function joinBoardAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("board:join", 20, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const inviteCode = readString(formData, "inviteCode");
     const boardId = readString(formData, "boardId");
@@ -166,13 +215,13 @@ export async function joinBoardAction(_: FormState | undefined, formData: FormDa
     await joinBoard(board.id, reportee.id);
     redirect("/employee");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to join board.");
+    return handleActionError("joinBoardAction", error, "Unable to join board.");
   }
 }
 
 export async function createSharedEntryAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("entry:create-shared", 20, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const boardId = readRequired(formData, "boardId", "Board");
     const membership = await ensureReporteeBelongsToBoard(reportee.id, boardId);
@@ -201,13 +250,13 @@ export async function createSharedEntryAction(_: FormState | undefined, formData
     revalidatePath("/employee");
     return succeed("Entry saved.");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to save entry.");
+    return handleActionError("createSharedEntryAction", error, "Unable to save entry.");
   }
 }
 
 export async function updateSharedEntryAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("entry:update-shared", 30, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const entryId = readRequired(formData, "entryId", "Entry");
     const entry = await getEntryById(entryId);
@@ -233,13 +282,13 @@ export async function updateSharedEntryAction(_: FormState | undefined, formData
     revalidatePath("/employee");
     return succeed("Entry updated.");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to update entry.");
+    return handleActionError("updateSharedEntryAction", error, "Unable to update entry.");
   }
 }
 
 export async function deleteSharedEntryAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("entry:delete-shared", 30, 10 * 60 * 1000);
     const reportee = await requireRole("reportee");
     const entryId = readRequired(formData, "entryId", "Entry");
     const entry = await getEntryById(entryId);
@@ -250,13 +299,13 @@ export async function deleteSharedEntryAction(_: FormState | undefined, formData
     revalidatePath("/employee");
     return succeed("Entry deleted.");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to delete entry.");
+    return handleActionError("deleteSharedEntryAction", error, "Unable to delete entry.");
   }
 }
 
 export async function createPrivateNoteAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("note:create-private", 20, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     const boardId = readRequired(formData, "boardId", "Board");
     const employeeId = readRequired(formData, "employeeId", "Employee");
@@ -287,13 +336,13 @@ export async function createPrivateNoteAction(_: FormState | undefined, formData
     revalidatePath(`/manager/board/${boardId}/employee/${employeeId}`);
     return succeed("Private note saved.");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to save note.");
+    return handleActionError("createPrivateNoteAction", error, "Unable to save note.");
   }
 }
 
 export async function createAnnouncementAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("announcement:create", 20, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     const boardId = readRequired(formData, "boardId", "Board");
     const board = await ensureManagerOwnsBoard(manager.id, boardId);
@@ -317,13 +366,13 @@ export async function createAnnouncementAction(_: FormState | undefined, formDat
     revalidatePath("/employee");
     return succeed("Announcement published.");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to publish announcement.");
+    return handleActionError("createAnnouncementAction", error, "Unable to publish announcement.");
   }
 }
 
 export async function removeBoardMemberAction(_: FormState | undefined, formData: FormData) {
   try {
+    await enforceActionRateLimit("board:remove-member", 10, 10 * 60 * 1000);
     const manager = await requireRole("manager");
     const boardId = readRequired(formData, "boardId", "Board");
     const employeeId = readRequired(formData, "employeeId", "Employee");
@@ -347,7 +396,6 @@ export async function removeBoardMemberAction(_: FormState | undefined, formData
 
     return succeed("Board member removed.");
   } catch (error) {
-    rethrowRedirectError(error);
-    return fail(error instanceof Error ? error.message : "Unable to remove this board member.");
+    return handleActionError("removeBoardMemberAction", error, "Unable to remove this board member.");
   }
 }

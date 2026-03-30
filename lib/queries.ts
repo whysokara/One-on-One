@@ -3,13 +3,54 @@ import {
   getBoardById,
   getBoardMembers,
   getEntriesForBoard,
+  getEntriesForEmployee,
   getManagerBoard,
   getMembership,
   getBoardForReportee,
   getUserById,
 } from "@/lib/db";
-import { Board, Entry, EntryVisibility, User } from "@/lib/types";
+import { Announcement, Board, Entry, EntryVisibility, User } from "@/lib/types";
 import { ALL_CATEGORIES } from "@/lib/constants";
+
+const BOARD_ACTIVITY_WINDOW_DAYS = 30;
+
+function latestTimestamp(values: string[]) {
+  return [...values].sort((a, b) => b.localeCompare(a))[0] ?? "";
+}
+
+function updateLatest(current: string, candidate: string) {
+  if (!current || candidate.localeCompare(current) > 0) {
+    return candidate;
+  }
+  return current;
+}
+
+function isRecentTimestamp(value: string, now: Date, windowDays: number) {
+  return now.getTime() - new Date(value).getTime() <= windowDays * 24 * 60 * 60 * 1000;
+}
+
+export function summarizeBoardHealth(input: {
+  boardUpdatedAt: string;
+  members: Array<{ lastUpdated: string }>;
+  entries: Entry[];
+  announcements: Announcement[];
+  now?: Date;
+}) {
+  const now = input.now ?? new Date();
+  const activeReportees = input.members.filter((member) => isRecentTimestamp(member.lastUpdated, now, BOARD_ACTIVITY_WINDOW_DAYS)).length;
+  const staleReportees = Math.max(0, input.members.length - activeReportees);
+  const latestActivityAt = latestTimestamp([
+    input.boardUpdatedAt,
+    ...input.entries.map((entry) => entry.updatedAt),
+    ...input.announcements.map((announcement) => announcement.updatedAt),
+  ]);
+
+  return {
+    activeReportees,
+    staleReportees,
+    latestActivityAt,
+  };
+}
 
 export async function getManagerDashboard(managerId: string) {
   const board = await getManagerBoard(managerId);
@@ -23,26 +64,50 @@ export async function getManagerDashboard(managerId: string) {
     getAnnouncementsForBoard(board.id),
   ]);
 
-  const entriesThisMonth = entries.filter((entry) => {
+  const now = new Date();
+  const currentYear = now.getUTCFullYear();
+  const currentMonth = now.getUTCMonth();
+  const entryCounts = new Map<string, number>();
+  const latestByMember = new Map<string, string>();
+  let entriesThisMonth = 0;
+  let totalSharedEntries = 0;
+  let managerNotesCount = 0;
+  let latestActivityAt = board.updatedAt;
+
+  for (const entry of entries) {
+    latestActivityAt = updateLatest(latestActivityAt, entry.updatedAt);
+
+    if (entry.visibility === "shared") {
+      totalSharedEntries += 1;
+      entryCounts.set(entry.employeeId, (entryCounts.get(entry.employeeId) ?? 0) + 1);
+      const currentLatest = latestByMember.get(entry.employeeId);
+      if (!currentLatest || entry.updatedAt.localeCompare(currentLatest) > 0) {
+        latestByMember.set(entry.employeeId, entry.updatedAt);
+      }
+    } else {
+      managerNotesCount += 1;
+    }
+
     const date = new Date(entry.entryDate);
-    const now = new Date();
-    return date.getUTCFullYear() === now.getUTCFullYear() && date.getUTCMonth() === now.getUTCMonth();
-  }).length;
+    if (date.getUTCFullYear() === currentYear && date.getUTCMonth() === currentMonth && entry.visibility === "shared") {
+      entriesThisMonth += 1;
+    }
+  }
 
-  const memberCards = members.map((member) => {
-    const personEntries = entries.filter((entry) => entry.employeeId === member.id && entry.visibility === "shared");
-    const lastUpdated =
-      personEntries
-        .map((entry) => entry.updatedAt)
-        .sort((a, b) => b.localeCompare(a))[0] ?? member.updatedAt;
-    return {
-      ...member,
-      entryCount: personEntries.length,
-      lastUpdated,
-    };
-  });
+  for (const announcement of announcements) {
+    latestActivityAt = updateLatest(latestActivityAt, announcement.updatedAt);
+  }
 
-  memberCards.sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated));
+  const memberCards = members
+    .map((member) => {
+      const lastUpdated = latestByMember.get(member.id) ?? member.updatedAt;
+      return {
+        ...member,
+        entryCount: entryCounts.get(member.id) ?? 0,
+        lastUpdated,
+      };
+    })
+    .sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated));
 
   return {
     board,
@@ -51,9 +116,10 @@ export async function getManagerDashboard(managerId: string) {
     announcements,
     summary: {
       totalReportees: members.length,
-      totalEntries: entries.filter((entry) => entry.visibility === "shared").length,
+      totalEntries: totalSharedEntries,
       entriesThisMonth,
-      managerNotesCount: entries.filter((entry) => entry.visibility === "manager_private").length,
+      managerNotesCount,
+      latestActivityAt,
     },
   };
 }
@@ -63,30 +129,40 @@ export async function getManagerEmployeeView(input: {
   boardId: string;
   employeeId: string;
 }) {
-  const [board, employee, members, allEntries] = await Promise.all([
+  const [board, employee, membership, allEntries] = await Promise.all([
     getBoardById(input.boardId),
     getUserById(input.employeeId),
-    getBoardMembers(input.boardId),
-    getEntriesForBoard(input.boardId),
+    getMembership(input.boardId, input.employeeId),
+    getEntriesForEmployee(input.employeeId),
   ]);
 
   if (!board || board.managerId !== input.managerId || !employee) {
     return null;
   }
 
-  const isMember = members.some((member) => member.id === employee.id);
-  if (!isMember) {
+  if (!membership) {
     return null;
   }
 
   const entries = allEntries
+    .filter((entry) => entry.boardId === board.id)
     .filter((entry) => entry.employeeId === employee.id)
     .sort((a, b) => b.entryDate.localeCompare(a.entryDate) || b.createdAt.localeCompare(a.createdAt));
+
+  let latestActivityAt = board.updatedAt;
+  for (const entry of entries) {
+    latestActivityAt = updateLatest(latestActivityAt, entry.updatedAt);
+  }
 
   return {
     board,
     employee,
     entries,
+    summary: {
+      sharedEntriesCount: entries.filter((entry) => entry.visibility === "shared").length,
+      privateNotesCount: entries.filter((entry) => entry.visibility === "manager_private").length,
+      latestActivityAt,
+    },
   };
 }
 
@@ -99,7 +175,7 @@ export async function getEmployeeHome(userId: string) {
   const [membership, manager, entries, announcements] = await Promise.all([
     getMembership(board.id, userId),
     getUserById(board.managerId),
-    getEntriesForBoard(board.id),
+    getEntriesForEmployee(userId),
     getAnnouncementsForBoard(board.id),
   ]);
 
@@ -108,14 +184,27 @@ export async function getEmployeeHome(userId: string) {
   }
 
   const ownEntries = entries
-    .filter((entry) => entry.employeeId === userId && entry.visibility === "shared")
+    .filter((entry) => entry.boardId === board.id && entry.employeeId === userId && entry.visibility === "shared")
     .sort((a, b) => b.entryDate.localeCompare(a.entryDate) || b.createdAt.localeCompare(a.createdAt));
+
+  let latestActivityAt = board.updatedAt;
+  for (const entry of ownEntries) {
+    latestActivityAt = updateLatest(latestActivityAt, entry.updatedAt);
+  }
+  for (const announcement of announcements) {
+    latestActivityAt = updateLatest(latestActivityAt, announcement.updatedAt);
+  }
 
   return {
     board,
     manager,
     announcements,
     entries: ownEntries,
+    summary: {
+      sharedEntriesCount: ownEntries.length,
+      announcementCount: announcements.length,
+      latestActivityAt,
+    },
   };
 }
 
@@ -155,6 +244,18 @@ export function normalizeEntryVisibilityFilter(value?: string) {
   return value === "shared" || value === "manager_private" ? (value satisfies EntryVisibility) : "all";
 }
 
+export function summarizeBoardYearMetrics(entries: Entry[], now = new Date()) {
+  const year = now.getUTCFullYear();
+  const sharedThisYear = entries.filter((entry) => entry.visibility === "shared" && new Date(entry.entryDate).getUTCFullYear() === year);
+
+  return {
+    total: sharedThisYear.length,
+    certifications: sharedThisYear.filter((entry) => entry.category === "certification").length,
+    awards: sharedThisYear.filter((entry) => entry.category === "appreciation").length,
+    needsAttention: sharedThisYear.filter((entry) => entry.category === "blocker" || entry.category === "issue").length,
+  };
+}
+
 export type MemberCard = User & {
   entryCount: number;
   lastUpdated: string;
@@ -170,5 +271,6 @@ export type ManagerDashboard = {
     totalEntries: number;
     entriesThisMonth: number;
     managerNotesCount: number;
+    latestActivityAt: string;
   };
 };

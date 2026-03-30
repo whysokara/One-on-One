@@ -1,107 +1,98 @@
 import Link from "next/link";
-import { AppFrame, Eyebrow, InfoStrip, SectionCard } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { AppFrame } from "@/components/ui";
+import { peekCurrentUser } from "@/lib/auth";
 
 export default async function HomePage() {
-  const user = await getCurrentUser();
-  const primaryHref = user ? (user.role === "manager" ? "/manager" : "/employee") : "/signup";
-  const secondaryHref = user ? (user.role === "manager" ? "/manager" : "/employee") : "/login";
-  const primaryLabel = user ? "Open workspace" : "Create account";
-  const secondaryLabel = user ? "Open board" : "Log in";
+  const user = await peekCurrentUser();
+  const primaryHref = user ? "/workspace" : "/signup";
+  const secondaryHref = user ? "/workspace" : "/login";
+  const primaryLabel = user ? "Open workspace" : "Get started";
 
   return (
     <AppFrame user={user}>
-      <div className="flex w-full flex-col gap-5">
-        <section className="overflow-hidden rounded-2xl border border-[#20334b]/12 bg-[linear-gradient(180deg,#18324d_0%,#10253a_100%)] px-5 py-5 text-white shadow-[0_16px_42px_rgba(16,24,40,0.12)] md:px-6 md:py-6">
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.38fr)_21rem]">
-            <div className="min-w-0">
-              <Eyebrow>Performance Memory System</Eyebrow>
-              <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]">
-                <div className="min-w-0">
-                  <h1 className="max-w-3xl text-[2.45rem] font-semibold leading-[0.92] tracking-[-0.06em] md:text-[3.45rem]">
-                    Performance reviews should not depend on memory.
-                  </h1>
-                  <p className="mt-3 max-w-xl text-[15px] leading-6 text-white/76 md:text-base">
-                    One board for the team. One timeline for each reportee. Enough structure to stay useful, without turning into process theatre.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2 text-sm text-white/82">
-                    <span className="rounded-lg border border-white/12 bg-white/7 px-2.5 py-1.5">Invite by code or link</span>
-                    <span className="rounded-lg border border-white/12 bg-white/7 px-2.5 py-1.5">Shared employee timeline</span>
-                    <span className="rounded-lg border border-white/12 bg-white/7 px-2.5 py-1.5">Private manager notes</span>
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-2.5">
-                    <Link href={primaryHref} className="inline-flex h-10 items-center rounded-xl bg-white px-4 text-sm font-medium text-[color:var(--hero)]">
-                      {primaryLabel}
-                    </Link>
-                    <Link href={secondaryHref} className="inline-flex h-10 items-center rounded-xl border border-white/16 bg-white/7 px-4 text-sm font-medium text-white">
-                      {secondaryLabel}
-                    </Link>
-                  </div>
-                </div>
-                <InfoStrip
-                  className="grid-cols-1 md:grid-cols-3 lg:grid-cols-1"
-                  items={[
-                    { label: "Capture", value: "Wins, blockers, learning, recognition." },
-                    { label: "Review", value: "Shared entries plus manager-only notes." },
-                    { label: "Result", value: "Cleaner, faster performance conversations." },
-                  ]}
-                />
-              </div>
-            </div>
-            <div className="grid gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/7 p-4 backdrop-blur">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/58">Workflow</div>
-                <div className="mt-3 grid gap-2">
-                  <div className="rounded-lg bg-white/8 px-3 py-2.5 text-sm text-white/84">Manager creates the board</div>
-                  <div className="rounded-lg bg-white/8 px-3 py-2.5 text-sm text-white/84">Reportees join and log moments</div>
-                  <div className="rounded-lg bg-white/8 px-3 py-2.5 text-sm text-white/84">Manager reviews evidence, not guesswork</div>
-                </div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white p-4 text-[color:var(--ink)]">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Product surface</div>
-                <div className="mt-3 overflow-hidden rounded-lg border border-[color:var(--line)] bg-[color:var(--mist)]">
-                  <div className="grid grid-cols-[5.75rem_6.5rem_minmax(0,1fr)] gap-2 border-b border-[color:var(--line)] bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                    <span>Date</span>
-                    <span>Type</span>
-                    <span>Entry</span>
-                  </div>
-                  <div className="grid grid-cols-[5.75rem_6.5rem_minmax(0,1fr)] gap-2 px-3 py-3 text-sm">
-                    <span className="text-[color:var(--muted)]">Mar 28</span>
-                    <span className="text-[color:var(--muted)]">Blocker</span>
-                    <span className="font-medium text-[color:var(--ink)]">Resolved vendor escalation before launch freeze.</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div className="flex w-full flex-col lg:flex-row gap-12 h-full min-h-0 items-center justify-center pt-10">
+        {/* Left Column: Flat corporate value prop */}
+        <div className="flex flex-col w-full lg:w-5/12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div>
+            <h1 className="font-display text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
+              Track your wins.<br/>
+              <span className="text-blue-700">
+                Ace your reviews.
+              </span>
+            </h1>
+            <p className="mt-6 text-base font-medium leading-relaxed text-slate-500 max-w-lg">
+              A shared timeline for you and your manager. Log your progress, stay in sync, and grow together.
+            </p>
           </div>
-        </section>
+          
+          <div className="mt-10 flex flex-wrap items-center gap-4 shrink-0">
+            <Link href={primaryHref} className="flex h-12 flex-1 min-w-[160px] items-center justify-center rounded-lg bg-blue-700 px-6 text-sm font-bold text-white transition-colors hover:bg-blue-800">
+              {primaryLabel}
+            </Link>
+            {!user && (
+              <Link href={secondaryHref} className="flex h-12 flex-1 min-w-[160px] items-center justify-center rounded-lg border border-slate-200 bg-white/80 px-6 text-sm font-bold text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800">
+                Log in
+              </Link>
+            )}
+          </div>
+        </div>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]">
-          <SectionCard title="Built to stay useful all year" description="The interface stays compact because this product is meant to be referenced constantly, not visited once a quarter.">
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">Manager</div>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Scan the team, keep private context, and remove people cleanly when reporting changes.</p>
-              </div>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">Reportee</div>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Capture meaningful moments quickly enough that people will actually keep the timeline current.</p>
-              </div>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">Outcome</div>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Fewer forgotten contributions, cleaner handoffs, and tighter one-on-one prep.</p>
-              </div>
-            </div>
-          </SectionCard>
+        {/* Right Column: Flat App Preview */}
+        <div className="panel flex h-full max-h-[700px] w-full flex-col overflow-hidden lg:w-7/12">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-6 py-4">
+             <div className="flex gap-1.5">
+               <div className="h-2.5 w-2.5 rounded-full bg-red-400 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35),0_1px_2px_rgba(15,23,42,0.08)]" />
+               <div className="h-2.5 w-2.5 rounded-full bg-amber-400 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35),0_1px_2px_rgba(15,23,42,0.08)]" />
+               <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35),0_1px_2px_rgba(15,23,42,0.08)]" />
+             </div>
+             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Live Timeline</div>
+          </div>
+          
+          <div className="flex-1 p-6 md:p-8 grid gap-4 overflow-y-auto content-start bg-slate-50/50">
+             {/* Fake entry 1 */}
+             <div className="rounded-2xl border border-slate-100 bg-white p-5 transition-colors hover:border-slate-200 relative overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+               <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500" />
+               <div className="flex justify-between items-center mb-3 pl-2">
+                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Oct 12</span>
+                 <span className="rounded bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">Certification</span>
+               </div>
+               <div className="font-display font-bold text-base text-slate-800 pl-2">AWS Solutions Architect</div>
+               <div className="text-xs font-medium text-slate-500 mt-1 truncate pl-2">Passed the associate exam with score of 890.</div>
+             </div>
+             
+             {/* Fake entry 2 */}
+             <div className="rounded-2xl border border-slate-100 bg-white p-5 transition-colors hover:border-slate-200 ml-8 md:ml-12 relative overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+               <div className="absolute left-0 top-0 h-full w-1 bg-blue-700" />
+               <div className="flex justify-between items-center mb-3 pl-2">
+                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sep 28</span>
+                 <span className="rounded bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">Appreciation</span>
+               </div>
+               <div className="font-display font-bold text-base text-slate-800 pl-2">Client Kudos: Acme Corp Launch</div>
+               <div className="text-xs font-medium text-slate-500 mt-1 truncate pl-2">Received outstanding feedback on the delivery speed.</div>
+             </div>
 
-          <SectionCard title="Core flow" description="No setup maze. The product is deliberately narrow.">
-            <ol className="space-y-2.5 text-sm leading-6 text-[color:var(--muted)]">
-              <li>1. A manager creates one board for the team.</li>
-              <li>2. Reportees join with a code or direct link.</li>
-              <li>3. Work moments are captured in a running timeline.</li>
-              <li>4. Managers review evidence, write private notes, and keep context attached to the right person.</li>
-            </ol>
-          </SectionCard>
+             {/* Fake entry 3 */}
+             <div className="rounded-2xl border border-slate-100 bg-white p-5 transition-colors hover:border-slate-200 relative overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+               <div className="absolute left-0 top-0 h-full w-1 bg-sky-600" />
+               <div className="flex justify-between items-center mb-3 pl-2">
+                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Aug 15</span>
+                 <span className="rounded bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-700">Award</span>
+               </div>
+               <div className="font-display font-bold text-base text-slate-800 pl-2">Won Internal Hackathon</div>
+               <div className="text-xs font-medium text-slate-500 mt-1 truncate pl-2">Built an AI document parser that won 1st place overall.</div>
+             </div>
+             
+             {/* Add Input Fake */}
+             <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-5 text-center transition-colors hover:bg-white hover:border-blue-200 ml-8 md:ml-12 cursor-pointer mt-2">
+               <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                 </svg>
+               </div>
+               <div className="text-[13px] font-bold text-slate-600 mb-1">Add achievement...</div>
+               <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 inline-block px-3 py-1 rounded">Press ⌘K</div>
+             </div>
+          </div>
         </div>
       </div>
     </AppFrame>

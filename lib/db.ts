@@ -44,6 +44,59 @@ function buildSortKey(dateValue: string, createdAt: string, id: string) {
   return `${dateValue}#${createdAt}#${id}`;
 }
 
+const PAGE_SIZE = 100;
+const BATCH_GET_SIZE = 100;
+
+async function queryAll<T>(commandFactory: (exclusiveStartKey?: Record<string, unknown>) => QueryCommand) {
+  const client = getDocumentClient();
+  const items: T[] = [];
+  let exclusiveStartKey: Record<string, unknown> | undefined;
+
+  do {
+    const result = await client.send(commandFactory(exclusiveStartKey));
+    items.push(...((result.Items ?? []) as T[]));
+    exclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (exclusiveStartKey);
+
+  return items;
+}
+
+async function batchGetUsers(userIds: string[]) {
+  const client = getDocumentClient();
+  const config = requireAwsConfig();
+  const users: User[] = [];
+  let remainingIds = [...new Set(userIds)];
+
+  for (let attempts = 0; remainingIds.length && attempts < 10; attempts += 1) {
+    const keys = remainingIds.slice(0, BATCH_GET_SIZE).map((id) => ({ id }));
+    remainingIds = remainingIds.slice(BATCH_GET_SIZE);
+
+    const batch = await client.send(
+      new BatchGetCommand({
+        RequestItems: {
+          [config.usersTable]: { Keys: keys },
+        },
+      }),
+    );
+
+    users.push(...((batch.Responses?.[config.usersTable] as User[] | undefined) ?? []));
+
+    const unprocessed = batch.UnprocessedKeys?.[config.usersTable]?.Keys ?? [];
+    if (unprocessed.length) {
+      remainingIds = [
+        ...unprocessed.map((key) => key.id as string),
+        ...remainingIds,
+      ];
+    }
+  }
+
+  if (remainingIds.length) {
+    throw new Error("Unable to load all board members right now.");
+  }
+
+  return users;
+}
+
 async function uniqueInviteCode() {
   let inviteCode = generateInviteCode();
   while (await getBoardByInviteCode(inviteCode)) {
@@ -274,34 +327,24 @@ export async function joinBoard(boardId: string, userId: string) {
 }
 
 export async function getBoardMembers(boardId: string) {
-  const client = getDocumentClient();
   const config = requireAwsConfig();
-  const membershipResult = await client.send(
+  const memberships = await queryAll<MembershipItem>((exclusiveStartKey) =>
     new QueryCommand({
       TableName: config.membershipsTable,
       KeyConditionExpression: "boardId = :boardId",
       ExpressionAttributeValues: {
         ":boardId": boardId,
       },
+      Limit: PAGE_SIZE,
+      ExclusiveStartKey: exclusiveStartKey,
     }),
   );
 
-  const memberships = (membershipResult.Items ?? []) as MembershipItem[];
   if (!memberships.length) {
     return [];
   }
 
-  const batch = await client.send(
-    new BatchGetCommand({
-      RequestItems: {
-        [config.usersTable]: {
-          Keys: memberships.map((member) => ({ id: member.userId })),
-        },
-      },
-    }),
-  );
-
-  return (batch.Responses?.[config.usersTable] as User[] | undefined) ?? [];
+  return batchGetUsers(memberships.map((member) => member.userId));
 }
 
 export async function getMembership(boardId: string, userId: string) {
@@ -339,10 +382,10 @@ export async function removeBoardMember(boardId: string, userId: string) {
     throw new Error("This person is no longer part of the board.");
   }
 
-  const entries = await getEntriesForBoard(boardId);
-  const employeeEntries = entries.filter((entry) => entry.employeeId === userId);
+  const employeeEntries = await getEntriesForEmployee(userId);
+  const boardEntries = employeeEntries.filter((entry) => entry.boardId === boardId);
 
-  await Promise.all(employeeEntries.map((entry) => deleteEntry(entry.id)));
+  await Promise.all(boardEntries.map((entry) => deleteEntry(entry.id)));
 
   await client.send(
     new DeleteCommand({
@@ -355,7 +398,7 @@ export async function removeBoardMember(boardId: string, userId: string) {
   );
 
   return {
-    removedEntries: employeeEntries.length,
+    removedEntries: boardEntries.length,
   };
 }
 
@@ -450,9 +493,8 @@ export async function deleteEntry(entryId: string) {
 }
 
 export async function getEntriesForBoard(boardId: string) {
-  const client = getDocumentClient();
   const config = requireAwsConfig();
-  const result = await client.send(
+  const items = await queryAll<EntryItem>((exclusiveStartKey) =>
     new QueryCommand({
       TableName: config.entriesTable,
       IndexName: "boardId-boardSortKey-index",
@@ -460,11 +502,32 @@ export async function getEntriesForBoard(boardId: string) {
       ExpressionAttributeValues: {
         ":boardId": boardId,
       },
+      Limit: PAGE_SIZE,
+      ExclusiveStartKey: exclusiveStartKey,
       ScanIndexForward: false,
     }),
   );
 
-  return ((result.Items ?? []) as EntryItem[]).map(stripEntryMetadata);
+  return items.map(stripEntryMetadata);
+}
+
+export async function getEntriesForEmployee(employeeId: string) {
+  const config = requireAwsConfig();
+  const items = await queryAll<EntryItem>((exclusiveStartKey) =>
+    new QueryCommand({
+      TableName: config.entriesTable,
+      IndexName: "employeeId-employeeSortKey-index",
+      KeyConditionExpression: "employeeId = :employeeId",
+      ExpressionAttributeValues: {
+        ":employeeId": employeeId,
+      },
+      Limit: PAGE_SIZE,
+      ExclusiveStartKey: exclusiveStartKey,
+      ScanIndexForward: false,
+    }),
+  );
+
+  return items.map(stripEntryMetadata);
 }
 
 export async function getEntryById(entryId: string) {
@@ -515,9 +578,8 @@ export async function createAnnouncement(input: {
 }
 
 export async function getAnnouncementsForBoard(boardId: string) {
-  const client = getDocumentClient();
   const config = requireAwsConfig();
-  const result = await client.send(
+  const items = await queryAll<AnnouncementItem>((exclusiveStartKey) =>
     new QueryCommand({
       TableName: config.announcementsTable,
       IndexName: "boardId-boardSortKey-index",
@@ -525,19 +587,24 @@ export async function getAnnouncementsForBoard(boardId: string) {
       ExpressionAttributeValues: {
         ":boardId": boardId,
       },
+      Limit: PAGE_SIZE,
+      ExclusiveStartKey: exclusiveStartKey,
       ScanIndexForward: false,
     }),
   );
 
-  return ((result.Items ?? []) as AnnouncementItem[]).map(stripAnnouncementMetadata);
+  return items.map(stripAnnouncementMetadata);
 }
 
 function stripEntryMetadata(item: EntryItem): Entry {
-  const { boardSortKey: _boardSortKey, employeeSortKey: _employeeSortKey, ...entry } = item;
+  const { boardSortKey, employeeSortKey, ...entry } = item;
+  void boardSortKey;
+  void employeeSortKey;
   return entry;
 }
 
 function stripAnnouncementMetadata(item: AnnouncementItem): Announcement {
-  const { boardSortKey: _boardSortKey, ...announcement } = item;
+  const { boardSortKey, ...announcement } = item;
+  void boardSortKey;
   return announcement;
 }

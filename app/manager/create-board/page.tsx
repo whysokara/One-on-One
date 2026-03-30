@@ -20,15 +20,14 @@ export default async function CreateBoardPage() {
         <PageHeader
           eyebrow="Board Setup"
           title="Create the board your team will join."
-          description="This board becomes the manager surface for people, announcements, timeline review, and private notes."
           aside={
             <>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Generated instantly</div>
+              <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700">Generated instantly</div>
                 Invite code, direct join link, and the live manager board.
               </div>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Naming rule</div>
+              <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-[color:var(--muted)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Naming rule</div>
                 Use a team label people already recognize. Keep it direct and easy to scan.
               </div>
             </>
@@ -36,7 +35,7 @@ export default async function CreateBoardPage() {
         />
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <FormShell title="Create board" description="This project keeps one active board per manager, so keep the setup concise and specific.">
+          <FormShell title="Create board">
             <ActionForm action={createBoardAction} submitLabel="Create board">
               <Field
                 label="Board name"
@@ -56,7 +55,7 @@ export default async function CreateBoardPage() {
             </ActionForm>
           </FormShell>
 
-          <SectionCard title="What good setup looks like" description="Keep the board easy to recognize.">
+          <SectionCard title="What good setup looks like">
             <div className="space-y-3 text-sm leading-6 text-[color:var(--muted)]">
               <p>Use one board per current team, not one board per experiment.</p>
               <p>Invite people as soon as the board exists so the timeline starts building early.</p>

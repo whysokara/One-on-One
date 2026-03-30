@@ -14,8 +14,9 @@ export function SignupForm() {
         placeholder="Kara Sharma"
         maxLength={VALIDATION_LIMITS.fullNameMax}
         minLength={VALIDATION_LIMITS.fullNameMin}
+        autoComplete="name"
       />
-      <Field label="Work email" name="email" type="email" required placeholder="kara@company.com" />
+      <Field label="Work email" name="email" type="email" required placeholder="kara@company.com" autoComplete="email" />
       <Field
         label="Password"
         name="password"
@@ -23,6 +24,7 @@ export function SignupForm() {
         required
         placeholder="At least 8 characters"
         minLength={VALIDATION_LIMITS.passwordMin}
+        autoComplete="new-password"
       />
       <SelectField
         label="Role"
@@ -39,8 +41,8 @@ export function SignupForm() {
 export function LoginForm() {
   return (
     <ActionForm action={loginAction} submitLabel="Log in">
-      <Field label="Work email" name="email" type="email" required placeholder="kara@company.com" />
-      <Field label="Password" name="password" type="password" required placeholder="Enter your password" />
+      <Field label="Work email" name="email" type="email" required placeholder="kara@company.com" autoComplete="email" />
+      <Field label="Password" name="password" type="password" required placeholder="Enter your password" autoComplete="current-password" />
     </ActionForm>
   );
 }

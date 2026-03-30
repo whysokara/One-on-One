@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth-forms";
 import { FormShell } from "@/components/forms";
 import { AppFrame, PageHeader, SectionCard } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
+import { peekCurrentUser } from "@/lib/auth";
 
 export default async function LoginPage() {
-  const user = await getCurrentUser();
+  const user = await peekCurrentUser();
 
   if (user) {
     redirect(user.role === "manager" ? "/manager" : "/employee");
@@ -19,44 +19,43 @@ export default async function LoginPage() {
           <PageHeader
             eyebrow="Log In"
             title="Return to the working record."
-            description="Existing accounts go straight into the correct workspace. No duplicate setup. No alternate role path."
             aside={
-              <>
-                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Managers</div>
+              <div className="grid w-full gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700">Managers</div>
                   Open the board, review reportees, publish announcements, and keep private notes with the right person.
                 </div>
-                <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Reportees</div>
+                <div className="rounded-2xl border border-slate-100 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Reportees</div>
                   Resume your timeline, add a new work moment, or review what already exists before the next one-on-one.
                 </div>
-              </>
+              </div>
             }
           />
 
-          <SectionCard title="What happens next" description="The routing stays simple after sign-in.">
+          <SectionCard title="What happens next">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 Managers land in the live board dashboard.
               </div>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 Reportees land in their own timeline.
               </div>
-              <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--muted)]">
+              <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 text-sm leading-6 text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 Valid sessions skip auth screens automatically.
               </div>
             </div>
           </SectionCard>
         </div>
 
-        <FormShell title="Log in" description="Use the same work email and password used when the account was created.">
-          <div className="mb-5 rounded-xl border border-[color:var(--line)] bg-[color:var(--mist)] px-4 py-4 text-sm leading-6 text-[color:var(--muted)]">
+        <FormShell title="Log in">
+          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4 text-sm leading-6 text-slate-600">
             This is a real Cognito-backed login. New accounts can sign up and come back later with the same credentials.
           </div>
           <LoginForm />
-          <p className="mt-4 text-sm text-[color:var(--muted)]">
+          <p className="mt-4 text-sm text-slate-500">
             Need an account?{" "}
-            <Link href="/signup" className="font-medium text-[color:var(--hero)]">
+            <Link href="/signup" className="font-bold text-blue-700 hover:text-blue-800">
               Create one
             </Link>
           </p>
