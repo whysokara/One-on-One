@@ -1,14 +1,3 @@
-type OptionalEnvKey =
-  | "ONEONONE_AWS_REGION"
-  | "AWS_REGION"
-  | "COGNITO_USER_POOL_ID"
-  | "COGNITO_USER_POOL_CLIENT_ID"
-  | "DDB_USERS_TABLE"
-  | "DDB_BOARDS_TABLE"
-  | "DDB_MEMBERSHIPS_TABLE"
-  | "DDB_ENTRIES_TABLE"
-  | "DDB_ANNOUNCEMENTS_TABLE";
-
 export type AwsAppConfig = {
   awsRegion: string;
   cognitoUserPoolId: string;
@@ -20,20 +9,19 @@ export type AwsAppConfig = {
   announcementsTable: string;
 };
 
-function readOptional(key: OptionalEnvKey) {
-  const value = process.env[key];
+function readValue(value: string | undefined) {
   return value?.trim() ? value.trim() : null;
 }
 
 export function getAwsConfig(): AwsAppConfig | null {
-  const awsRegion = readOptional("ONEONONE_AWS_REGION") ?? readOptional("AWS_REGION");
-  const cognitoUserPoolId = readOptional("COGNITO_USER_POOL_ID");
-  const cognitoUserPoolClientId = readOptional("COGNITO_USER_POOL_CLIENT_ID");
-  const usersTable = readOptional("DDB_USERS_TABLE");
-  const boardsTable = readOptional("DDB_BOARDS_TABLE");
-  const membershipsTable = readOptional("DDB_MEMBERSHIPS_TABLE");
-  const entriesTable = readOptional("DDB_ENTRIES_TABLE");
-  const announcementsTable = readOptional("DDB_ANNOUNCEMENTS_TABLE");
+  const awsRegion = readValue(process.env.ONEONONE_AWS_REGION) ?? readValue(process.env.AWS_REGION);
+  const cognitoUserPoolId = readValue(process.env.COGNITO_USER_POOL_ID);
+  const cognitoUserPoolClientId = readValue(process.env.COGNITO_USER_POOL_CLIENT_ID);
+  const usersTable = readValue(process.env.DDB_USERS_TABLE);
+  const boardsTable = readValue(process.env.DDB_BOARDS_TABLE);
+  const membershipsTable = readValue(process.env.DDB_MEMBERSHIPS_TABLE);
+  const entriesTable = readValue(process.env.DDB_ENTRIES_TABLE);
+  const announcementsTable = readValue(process.env.DDB_ANNOUNCEMENTS_TABLE);
   if (
     !awsRegion ||
     !cognitoUserPoolId ||
